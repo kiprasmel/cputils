@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# cfgen - codeforces contest boilerplate generator
+
+USAGE="usage: cfgen CONTEST_NUM\n\n"
+
+DIRNAME="$(dirname "$0")"
+CONTEST_NUM="$1"
+DIR="$CONTEST_NUM"
+
+[ -z "$1" ] && {
+	printf "$USAGE"
+	exit 1
+}
+
+mkdir -p "$DIR"
+
+FILE_NAMES=('a' 'b' 'c' 'd' 'e' 'f' 'g' 'h')
+for i in "${FILE_NAMES[@]}"; do
+	/usr/bin/env bash "$DIRNAME/m" "./$DIR/$i.cpp" -t -y
+done

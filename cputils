@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# cputils - competitive programming utilities
+
+DIRNAME="$(dirname "$0")"
+
+case "$1" in
+	m)
+		shift
+		/usr/bin/env bash "$DIRNAME/m" $*
+		;;
+	d)
+		shift
+		/usr/bin/env bash "$DIRNAME/d" $*
+		;;
+	p)
+		shift
+		/usr/bin/env bash "$DIRNAME/p" $*
+		;;
+	cfgen)
+		shift
+		/usr/bin/env bash "$DIRNAME/cfgen" $*
+		;;
+	*)
+		printf "cputils [m|d|p|cfgen] [ARGS...]\n\n"
+		exit 1
+		;;
+esac
