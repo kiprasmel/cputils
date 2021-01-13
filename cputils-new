@@ -5,8 +5,8 @@ USAGE="\
 usage: m new_filename.cpp [<options>]
 
 opts:
-    -t    use template with test cases (main.t.cpp)
-	-y    non-interactive (do not open file with editor etc.)
+    -t [NAME]  use template by name (template.NAME.cpp) (defaults to template.cpp)
+	-y         non-interactive (do not open file with editor etc.)
 
 "
 
@@ -20,10 +20,13 @@ OUTFILE="$1"
 }
 
 case "$2" in
-	-t) INFILE="$CFGDIR/template.t.cpp" ;;
-	*)  INFILE="$CFGDIR/template.cpp"   ;;
+	-t)   INFILE="$CFGDIR/template.t.cpp" ;;
+	-ths) INFILE="$CFGDIR/template.hs"    ;;
+	*)    INFILE="$CFGDIR/template.cpp"   ;;
 esac
 
+# TODO try any file extension
+# TODO even better - use the extension that was profided to "OUTFILE"
 cp -i -v "$INFILE" "$OUTFILE"
 
 case "$3" in 
@@ -34,3 +37,4 @@ case "$3" in
 		open_with_editor "$OUTFILE"
 		;;
 esac
+

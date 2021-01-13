@@ -1,7 +1,7 @@
 # cputils
 
 <!-- CLI utilities for competitive programmers -->
-competitive programming utilities
+competitive programming utils
 
 ## Installation
 
@@ -11,21 +11,28 @@ git clone https://github.com/kiprasmel/cputils.git
 
 cd cputils
 
-sudo cp -v cputils d i m p cfgen "/usr/local/bin/"
+sudo cp -v cputils cputils-* "/usr/local/bin/"
 
-CPUTILS_CONFIG_DIR="$HOME/.config/cputils"
-mkdir -p                     "$CPUTILS_CONFIG_DIR"
-cp -v -n template*.cpp       "$CPUTILS_CONFIG_DIR/" # -n for no overwriting
-cp -v -n cputils.config.bash "$CPUTILS_CONFIG_DIR/" # -n for no overwriting
-
-chmod +x "$CPUTILS_CONFIG_DIR/cputils.config.bash"
+mkdir -p                     "$HOME/.config/cputils"
+cp -v -n template*.cpp       "$HOME/.config/cputils" # -n for no overwriting
+cp -v -n cputils.config.bash "$HOME/.config/cputils" # -n for no overwriting
 
 ```
 
 ## Usage
 
-```sh
-cputils [m|d|p|cfgen] [ARGS...]
+```console
+cputils COMMAND [COMMAND_ARGS...]
+
+COMMAND:
+        new        - new file from template      (alias n)
+		run DEBUG  - run in debug           mode (alias cputils d)
+		run EVAL   - run in eval/production mode (alias p)
+        cfgen      - codeforces generator from template
+	
+
+see individual commands for details
+
 ```
 
 ## Enhancements
@@ -38,9 +45,9 @@ x() {
 }
 ```
 
-- auto-open a file created by `cputils m`:
+- auto-open a file created by `cputils new`:
 
-edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `open_with_editor` function provide a way to open the file `"$1"` with your editor:
+edit the config file `~/.config/cputils/cputils.config.bash` -- inside the `open_with_editor` function provide a way to open the file `"$1"` with your editor:
 
 ```sh
 #!/usr/bin/env bash
@@ -60,12 +67,13 @@ export -f open_with_editor
 # ...
 ```
 
-- customize file templates for `cputils m`:
+- customize file templates for `cputils new`:
 
 ```sh
-cd "$HOME/.config/cputils"
+cd "$HOME/.config/cputils/"
 ```
 
 and overwrite the default `template.cpp`;
 
-additionally - create other templates named `template.TEMPLATE_NAME.cpp` and use them via `cputils m new_file.cpp -t TEMPLATE_NAME`
+additionally - create other templates named `template.TEMPLATE_NAME.cpp` and use them via `cputils new file.cpp -t TEMPLATE_NAME`
+

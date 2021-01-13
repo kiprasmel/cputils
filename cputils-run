@@ -1,5 +1,20 @@
 #!/usr/bin/env bash
-# d - develop in debug mode (defines "DEBUG")
+# the good stuff
+
+if [ -z "$1" ]; then
+	printf "
+usage:
+
+cputils-run MODE filename.cpp
+
+	MODE = DEBUG or EVAL or custom #define
+
+"
+	exit 1
+else
+	MODE_DEFINE="$1"
+	shift
+fi
 
 [ -z "$1" ] && {
 	printf "usage: d filename.cpp\n\n"
@@ -38,5 +53,12 @@ fi
 printf "BEGIN INPUT\n$INPUT\nEND INPUT\n"
 printf "$WHICH_INPUT_USED\n\n"
 
+# run based on time cmd (best if GNU /usr/bin/time is available)
+if command -v /usr/bin/env time &>/dev/null; then
+	TIME_CMD="/usr/bin/env time"
+	TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss\n"
+	g++ -std=c++17 "$1" -Wall -D $MODE_DEFINE && printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" ./a.out)
+else
+	g++ -std=c++17 "$1" -Wall -D $MODE_DEFINE && printf "$INPUT\n" | (time ./a.out)
+fi
 
-g++ -std=c++17 "$1" -Wall -DDEBUG && printf "$INPUT\n" | (time ./a.out)

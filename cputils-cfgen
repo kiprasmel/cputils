@@ -12,9 +12,11 @@ DIR="$CONTEST_NUM"
 	exit 1
 }
 
+shift
+
 mkdir -p "$DIR"
 
 FILE_NAMES=('a' 'b' 'c' 'd' 'e' 'f' 'g' 'h')
 for i in "${FILE_NAMES[@]}"; do
-	/usr/bin/env bash "$DIRNAME/m" "./$DIR/$i.cpp" -t -y
+	/usr/bin/env bash "$DIRNAME/m" "./$DIR/$i.cpp" $*
 done
