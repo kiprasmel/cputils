@@ -1,7 +1,7 @@
 # cputils
 
 <!-- CLI utilities for competitive programmers -->
-competitive programming utils
+<u>c</u>ompetitive <u>p</u>rogramming <u>utils</u>
 
 ## Installation
 
@@ -11,12 +11,7 @@ git clone https://github.com/kiprasmel/cputils.git
 
 cd cputils
 
-sudo cp -v cputils cputils-* "/usr/local/bin/"
-
-mkdir -p                     "$HOME/.config/cputils"
-cp -v -n template*.cpp       "$HOME/.config/cputils" # -n for no overwriting
-cp -v -n cputils.config.bash "$HOME/.config/cputils" # -n for no overwriting
-
+make install
 ```
 
 ## Usage
