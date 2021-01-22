@@ -90,10 +90,10 @@ if command -v /usr/bin/env time &>/dev/null; then
 	# this allows the user to provide extra arguments
 	# and/or overrides to the g++ compiler.
 
-	g++ -std=c++17 -Wall -o "$OUTPUT_FILE" "$INPUT_FILE" -D $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS && \
+	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE" -D $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS && \
 	printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
 else
-	g++ -std=c++17 -Wall -o "$OUTPUT_FILE" "$INPUT_FILE" -D $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS && \
+	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE" -D $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS && \
 	printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
 fi
 
