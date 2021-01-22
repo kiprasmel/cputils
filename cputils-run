@@ -1,25 +1,47 @@
 #!/usr/bin/env bash
 # the good stuff
 
-if [ -z "$1" ]; then
-	printf "
+if [ -z "$1" ] || [ -z "$2" ]; then
+	printf "\
 usage:
 
-cputils-run MODE filename.cpp
+cputils-run \"MODE_AND_EXTRA_COMPILER_ARGS\" FILENAME.cpp [- [INPUT_FILE]]
 
-	MODE = DEBUG or EVAL or custom #define
+  where
+    MODE_AND_EXTRA_COMPILER_ARGS    = DEBUG or EVAL or custom #define
+                                      plus any other arguments to the g++ compiler
+                                      note: don't forget quotes around it if
+                                            you're passing in stuff with spaces
+
+    FILENAME.cpp                    = source file you want to run
+
+    -                               = reuse previous input
+                                      instead of reading from clipboard
+
+    INPUT_FILE                      = input file to take input from.
+                                      default: FILENAME.cpp.in
+
+
+  examples:
+    with DEBUG define:
+      cputils-run DEBUG a.cpp               # reads input from clipboard
+      cputils-run DEBUG a.cpp -             # reads input from file \"a.cpp.in\"
+      cputils-run DEBUG a.cpp - in          # reads input from file \"in\"
+
+    with EVAL define:
+      cputils-run EVAL  a.cpp               # reads input from clipboard
+      cputils-run EVAL  a.cpp -             # reads input from file \"a.cpp.in\"
+      cputils-run EVAL  a.cpp - in          # reads input from file \"in\"
+
+    with define + extra args to the g++ compiler (quotes necessary):
+      cputils-run \"DEBUG -std=c++98 -Wextra -Wpedantic -O2\"  a.cpp
 
 "
 	exit 1
 else
-	MODE_DEFINE="$1"
+	MODE_DEFINE_AND_EXTRA_COMPILER_ARGS="$1"
 	shift
 fi
-
-[ -z "$1" ] && {
-	printf "usage: d filename.cpp\n\n"
-	exit 1
-}
 
 INPUT_FILE="$1"
 
@@ -63,8 +85,15 @@ printf "$WHICH_INPUT_USED\n\n"
 if command -v /usr/bin/env time &>/dev/null; then
 	TIME_CMD="/usr/bin/env time"
 	TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss\n"
-	g++ -std=c++17 "$INPUT_FILE" -o "$OUTPUT_FILE" -Wall -D $MODE_DEFINE && printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
+
+	# note: do NOT quote $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS --
+	# this allows the user to provide extra arguments
+	# and/or overrides to the g++ compiler.
+
+	g++ -std=c++17 -Wall -o "$OUTPUT_FILE" "$INPUT_FILE" -D $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS && \
+	printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
 else
-	g++ -std=c++17 "$INPUT_FILE" -o "$OUTPUT_FILE" -Wall -D $MODE_DEFINE && printf "$INPUT\n" | (time "$OUTPUT_FILE")
+	g++ -std=c++17 -Wall -o "$OUTPUT_FILE" "$INPUT_FILE" -D $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS && \
+	printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
 fi
 
