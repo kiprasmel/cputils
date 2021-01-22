@@ -21,6 +21,12 @@ fi
 	exit 1
 }
 
+INPUT_FILE="$1"
+
+# remove extension & add ".out" suffix (easier to .gitignore etc)
+# https://stackoverflow.com/a/36341390/9285308
+OUTPUT_FILE="${INPUT_FILE%.*}.out"
+
 # INPUT_FROM_CLIPBOARD="$(xclip -selection primary -o || xclip -selection clipboard -o)"
 INPUT_FROM_CLIPBOARD="$(xclip -selection clipboard -o || xclip -selection primary -o)"
 
@@ -57,8 +63,8 @@ printf "$WHICH_INPUT_USED\n\n"
 if command -v /usr/bin/env time &>/dev/null; then
 	TIME_CMD="/usr/bin/env time"
 	TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss\n"
-	g++ -std=c++17 "$1" -Wall -D $MODE_DEFINE && printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" ./a.out)
+	g++ -std=c++17 "$INPUT_FILE" -o "$OUTPUT_FILE" -Wall -D $MODE_DEFINE && printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
 else
-	g++ -std=c++17 "$1" -Wall -D $MODE_DEFINE && printf "$INPUT\n" | (time ./a.out)
+	g++ -std=c++17 "$INPUT_FILE" -o "$OUTPUT_FILE" -Wall -D $MODE_DEFINE && printf "$INPUT\n" | (time "$OUTPUT_FILE")
 fi
 
