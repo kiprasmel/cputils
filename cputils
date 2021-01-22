@@ -18,11 +18,11 @@ case "$1" in
 		;;
 	d)
 		shift
-		/usr/bin/env bash "$DIRNAME/cputils-run DEBUG" $*
+		/usr/bin/env bash "$DIRNAME/cputils-run" "DEBUG" $*
 		;;
 	p)
 		shift
-		/usr/bin/env bash "$DIRNAME/cputils-run EVAL" $*
+		/usr/bin/env bash "$DIRNAME/cputils-run" "EVAL" $*
 		;;
 	cfgen)
 		shift
