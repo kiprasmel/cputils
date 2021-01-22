@@ -35,11 +35,11 @@ usage:
 cputils COMMAND [COMMAND_ARGS...]
 
 COMMAND:
-        new        - new file from template      (alias n)
-		run DEBUG  - run in debug           mode (alias cputils d)
-		run EVAL   - run in eval/production mode (alias p)
+        new        - new file from template      (alias cputils n)
+        run DEBUG  - run in debug           mode (alias cputils d)
+        run EVAL   - run in eval/production mode (alias cputils p)
         cfgen      - codeforces generator from template
-	
+    
 
 see individual commands for details
 

@@ -26,8 +26,8 @@ cputils COMMAND [COMMAND_ARGS...]
 
 COMMAND:
         new        - new file from template      (alias n)
-		run DEBUG  - run in debug           mode (alias cputils d)
-		run EVAL   - run in eval/production mode (alias p)
+        run DEBUG  - run in debug           mode (alias cputils d)
+        run EVAL   - run in eval/production mode (alias p)
         cfgen      - codeforces generator from template
 	
 
