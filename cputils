@@ -8,8 +8,7 @@ cputils COMMAND [COMMAND_ARGS...]
 
 COMMAND:
         new        - new file from template
-        run DEBUG  - run in debug           mode
-        run EVAL   - run in eval/production mode
+        run        - run file
         cfgen      - codeforces generator from template
     
 

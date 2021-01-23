@@ -1,99 +1,195 @@
 #!/usr/bin/env bash
 # the good stuff
 
-if [ -z "$1" ] || [ -z "$2" ]; then
-	printf "\
+#
+# TODO:
+# we need to simplify the explanation (of "-a" vs "--")
+#
+# it's possible: use "-a" as the first example
+# and then mention that "--" is the same but must be used at least once
+# at the end of the execution chain)
+#
+
+USAGE="\
 usage:
 
-cputils-run \"MODE_AND_EXTRA_COMPILER_ARGS\" FILENAME.cpp [- [INPUT_FILE]]
+cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EXTRA_COMPILER_ARGS]
 
   where
-    MODE_AND_EXTRA_COMPILER_ARGS    = DEBUG or EVAL or custom #define
-                                      plus any other arguments to the g++ compiler
-                                      note: don't forget quotes around it if
-                                            you're passing in stuff with spaces
+    FILENAME.cpp                = source file you want to run
 
-    FILENAME.cpp                    = source file you want to run
+    -                           = reuse previous input
+                                  instead of reading from clipboard
 
-    -                               = reuse previous input
-                                      instead of reading from clipboard
+    INPUT_FILE                  = input file to take input from.
+                                  default: FILENAME.cpp.in
 
-    INPUT_FILE                      = input file to take input from.
-                                      default: FILENAME.cpp.in
+    
+    -- EXTRA_COMPILER_ARGS      = stop parsing args and forward everything
+                                  to the compiler.
+                                  hint: set custom #define's from here
+                                        or override default settings etc.
+
+    -a \"EXTRA_COMPILER_ARGS\"    = forward the argument EXTRA_COMPILER_ARGS
+                                  to the compiler, but when aliasing.
+
+                                  you'll likely want to create some aliases,
+                                  e.g.
+
+                                  \`xd() { cputils-run \$* -- -DDEBUG }\`
+
+                                  for debugging,
+                                  but then once you use \`--\` more than once -
+                                  in an alias AND when editing in the command line
+                                  for providing extra flags - everything will break
+                                  since there'll be multiple \`--\` flags.
+
+                                  i.e., \`-a\` and \`--\` are the same thing, except:
+                                  \`-a\`:
+                                      can be used multiple times
+                                      each time it's used, the whole argument must be in quotes
+                                  \`--\`:
+                                      can be used only once
+                                      the whole argument need not be in quotes
+
+                                  use \`-a\` for creating /comfy/ aliases,
+                                  and \`--\` for quick modifications once already in the command line
 
 
   examples:
-    with DEBUG define:
-      cputils-run DEBUG a.cpp               # reads input from clipboard
-      cputils-run DEBUG a.cpp -             # reads input from file \"a.cpp.in\"
-      cputils-run DEBUG a.cpp - in          # reads input from file \"in\"
+    simple:
+      cputils-run a.cpp               # reads input from clipboard
+      cputils-run a.cpp -             # reads input from file \"a.cpp.in\"
+      cputils-run a.cpp - in          # reads input from file \"in\"
 
-    with EVAL define:
-      cputils-run EVAL  a.cpp               # reads input from clipboard
-      cputils-run EVAL  a.cpp -             # reads input from file \"a.cpp.in\"
-      cputils-run EVAL  a.cpp - in          # reads input from file \"in\"
+    with args to the compiler:
+      cputils-run a.cpp      -- -DDEBUG -std=c++98 -Wextra
+      cputils-run a.cpp -    -- -DDEBUG -std=c++17 -Wextra -Wpedantic
+      cputils-run a.cpp - in -- -DEVAL  -std=c++20 -O2
 
-    with define + extra args to the g++ compiler (quotes necessary):
-      cputils-run \"DEBUG -std=c++98 -Wextra -Wpedantic -O2\"  a.cpp
+    using aliases:
+      .bashrc / .zshrc etc.:
+
+      xd() { cputils-run -a \"-DDEBUG\" $* }
+
+    simple (using aliases):
+      xd a.cpp               # reads input from clipboard
+      xd a.cpp -             # reads input from file \"a.cpp.in\"
+      xd a.cpp - in          # reads input from file \"in\"
+
+    with args to the compiler (using aliases):
+      xd a.cpp      --        -std=c++98 -Wextra
+      xd a.cpp -    --        -std=c++17 -Wextra -Wpedantic
+      xd a.cpp - in -- -DEVAL -std=c++20 -O2
 
 "
-	exit 1
-else
-	MODE_DEFINE_AND_EXTRA_COMPILER_ARGS="$1"
-	shift
-fi
 
-INPUT_FILE="$1"
+# parse arguments
+
+[ -z "$1" ] && {
+	printf "$USAGE"
+	exit 1
+}
+
+EXTRA_FROM_ALIAS=""
+
+while (( $# )); do
+	case "$1" in
+		-)
+			WHICH_INPUT_USED="FILE_CACHE"
+			shift
+			;;
+		--)
+			shift
+			break
+			# stop parsing and forward rest of arguments
+			# to the compiler
+			;;
+		-a)
+			shift
+			EXTRA_FROM_ALIAS="$EXTRA_FROM_ALIAS $1"
+			shift
+			;;
+		*)
+			if [ -z "$INPUT_FILE" ]; then
+				INPUT_FILE="$1"
+				shift
+			elif [ ! -z "$WHICH_INPUT_USED" ]; then
+				WHICH_INPUT_USED="FILE_CUSTOM"
+				CUSTOM_INPUT_FILE="$1"
+				shift
+			else
+				printf "$USAGE"
+				shift
+				exit 1
+			fi
+			;;
+	esac
+done
+
+[ -z "$WHICH_INPUT_USED" ] && WHICH_INPUT_USED="CLIPBOARD"
+
+# echo "INPUT_FILE $INPUT_FILE; WHICH_INPUT_USED $WHICH_INPUT_USED; CUSTOM_INPUT_FILE $CUSTOM_INPUT_FILE;"
 
 # remove extension & add ".out" suffix (easier to .gitignore etc)
 # https://stackoverflow.com/a/36341390/9285308
 OUTPUT_FILE="${INPUT_FILE%.*}.out"
 
-# INPUT_FROM_CLIPBOARD="$(xclip -selection primary -o || xclip -selection clipboard -o)"
-INPUT_FROM_CLIPBOARD="$(xclip -selection clipboard -o || xclip -selection primary -o)"
-
-INPUT_CACHE_FILE="$1.in"
+INPUT_CACHE_FILE="$INPUT_FILE.in"
 touch "$INPUT_CACHE_FILE"
-INPUT_FROM_CACHE_FILE="$(cat $INPUT_CACHE_FILE)"
 
-if [ -z "$2" ]; then
-	WHICH_INPUT_USED="CLIPBOARD"
-	INPUT="$INPUT_FROM_CLIPBOARD"
+# determine INPUT and INPUT_INFO
+
+if [ "$WHICH_INPUT_USED" = "CLIPBOARD" ]; then
+	INPUT_INFO="CLIPBOARD"
+	INPUT="$(xclip -selection clipboard -o || xclip -selection primary -o)"
 
 	# prepend the input from clipboard into the cache file
 	mv "$INPUT_CACHE_FILE" "$INPUT_CACHE_FILE.bp"
 	printf "$INPUT\n\n\n" >> "$INPUT_CACHE_FILE"
 	cat "$INPUT_CACHE_FILE.bp" >> "$INPUT_CACHE_FILE"
 	rm "$INPUT_CACHE_FILE.bp"
-elif [ -z "$3" ]; then
-	WHICH_INPUT_USED="FILE ($INPUT_CACHE_FILE)"
 
-	INPUT="$INPUT_FROM_CACHE_FILE"
+elif [ "$WHICH_INPUT_USED" = "FILE_CACHE" ]; then
+	INPUT_INFO="FILE ($INPUT_CACHE_FILE)"
+	INPUT="$(cat $INPUT_CACHE_FILE)"
 
-	# do not prepend the input
+elif [ "$WHICH_INPUT_USED" = "FILE_CUSTOM" ]; then
+	INPUT_INFO="FILE ($CUSTOM_INPUT_FILE)"
+	INPUT="$(cat $CUSTOM_INPUT_FILE)"
+
 else
-	WHICH_INPUT_USED="FILE ($3)"
+	printf "\
+cputils-run error: parsing arguments went wrong ¯\\_(:c)_/¯
 
-	INPUT_FROM_CUSTOM_FILE="$(cat $3)"
-	INPUT="$INPUT_FROM_CUSTOM_FILE"
+create an issue here:
+https://github.com/kiprasmel/cputils
+
+"
+	exit 1
 fi
 
+# go go go
+
 printf "BEGIN INPUT\n$INPUT\nEND INPUT\n"
-printf "$WHICH_INPUT_USED\n\n"
+printf "$INPUT_INFO\n\n"
 
 # run based on time cmd (best if GNU /usr/bin/time is available)
 if command -v /usr/bin/env time &>/dev/null; then
+
 	TIME_CMD="/usr/bin/env time"
 	TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss\n"
 
-	# note: do NOT quote $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS --
-	# this allows the user to provide extra arguments
-	# and/or overrides to the g++ compiler.
+	# do NOT quote $EXTRA_FROM_ALIAS nor $*
+	# because this allows them to expand
+	# and act as multiple different arguments
+	# as opposed to a single one
 
-	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE" -D $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS && \
-	printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
+	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
+	printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "./$OUTPUT_FILE")
+
 else
-	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE" -D $MODE_DEFINE_AND_EXTRA_COMPILER_ARGS && \
-	printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
+	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
+	printf "$INPUT\n" | (time                       "./$OUTPUT_FILE")
 fi
 

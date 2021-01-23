@@ -33,11 +33,10 @@ usage:
 cputils COMMAND [COMMAND_ARGS...]
 
 COMMAND:
-        new        - new file from template      (alias cputils n)
-        run DEBUG  - run in debug           mode (alias cputils d)
-        run EVAL   - run in eval/production mode (alias cputils p)
+        new        - new file from template     
+        run        - run file
         cfgen      - codeforces generator from template
-
+    
 
 see individual commands for details
 ```
@@ -80,36 +79,76 @@ cputils-new NEW_FILENAME.EXTENSION [OPTIONS]
 ```sh
 $ cputils run
 
-cputils-run "MODE_AND_EXTRA_COMPILER_ARGS" FILENAME.cpp [- [INPUT_FILE]]
+usage:
+
+cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTRA_COMPILER_ARGS]
 
   where
-    MODE_AND_EXTRA_COMPILER_ARGS    = DEBUG or EVAL or custom #define
-                                      plus any other arguments to the g++ compiler
-                                      note: don't forget quotes around it if
-                                            you're passing in stuff with spaces
+    FILENAME.cpp                = source file you want to run
 
-    FILENAME.cpp                    = source file you want to run
+    -                           = reuse previous input
+                                  instead of reading from clipboard
 
-    -                               = reuse previous input
-                                      instead of reading from clipboard
+    INPUT_FILE                  = input file to take input from.
+                                  default: FILENAME.cpp.in
 
-    INPUT_FILE                      = input file to take input from.
-                                      default: FILENAME.cpp.in
+    
+    -- EXTRA_COMPILER_ARGS      = stop parsing args and forward everything
+                                  to the compiler.
+                                  hint: set custom #define's from here
+                                        or override default settings etc.
+
+    -a "EXTRA_COMPILER_ARGS"    = forward the argument EXTRA_COMPILER_ARGS
+                                  to the compiler, but when aliasing.
+
+                                  you'll likely want to create some aliases,
+                                  e.g.
+
+                                  `xd() { cputils-run $* -- -DDEBUG }`
+
+                                  for debugging,
+                                  but then once you use `--` more than once -
+                                  in an alias AND when editing in the command line
+                                  for providing extra flags - everything will break
+                                  since there'll be multiple `--` flags.
+
+                                  i.e., `-a` and `--` are the same thing, except:
+                                  `-a`:
+                                      can be used multiple times
+                                      each time it's used, the whole argument must be in quotes
+                                  `--`:
+                                      can be used only once
+                                      the whole argument need not be in quotes
+
+                                  use `-a` for creating /comfy/ aliases,
+                                  and `--` for quick modifications once already in the command line
 
 
   examples:
-    with DEBUG define:
-      cputils-run DEBUG a.cpp               # reads input from clipboard
-      cputils-run DEBUG a.cpp -             # reads input from file "a.cpp.in"
-      cputils-run DEBUG a.cpp - in          # reads input from file "in"
+    simple:
+      cputils-run a.cpp               # reads input from clipboard
+      cputils-run a.cpp -             # reads input from file "a.cpp.in"
+      cputils-run a.cpp - in          # reads input from file "in"
 
-    with EVAL define:
-      cputils-run EVAL  a.cpp               # reads input from clipboard
-      cputils-run EVAL  a.cpp -             # reads input from file "a.cpp.in"
-      cputils-run EVAL  a.cpp - in          # reads input from file "in"
+    with args to the compiler:
+      cputils-run a.cpp      -- -DDEBUG -std=c++98 -Wextra
+      cputils-run a.cpp -    -- -DDEBUG -std=c++17 -Wextra -Wpedantic
+      cputils-run a.cpp - in -- -DEVAL  -std=c++20 -O2
 
-    with define + extra args to the g++ compiler (quotes necessary):
-      cputils-run "DEBUG -std=c++98 -Wextra -Wpedantic -O2"  a.cpp
+    using aliases:
+      .bashrc / .zshrc etc.:
+
+      xd() { cputils-run -a "-DDEBUG"  }
+
+    simple (using aliases):
+      xd a.cpp               # reads input from clipboard
+      xd a.cpp -             # reads input from file "a.cpp.in"
+      xd a.cpp - in          # reads input from file "in"
+
+    with args to the compiler (using aliases):
+      xd a.cpp      --        -std=c++98 -Wextra
+      xd a.cpp -    --        -std=c++17 -Wextra -Wpedantic
+      xd a.cpp - in -- -DEVAL -std=c++20 -O2
 ```
 
 ## Enhancements
@@ -119,8 +158,8 @@ cputils-run "MODE_AND_EXTRA_COMPILER_ARGS" FILENAME.cpp [- [INPUT_FILE]]
 ```sh
 x()  { cputils $* }
 xr() { cputils run $* }
-xd() { cputils run DEBUG $* }
-xp() { cputils run EVAL  $* }
+xd() { cputils run -a "-DDEBUG" $* }
+xp() { cputils run -a "-DEVAL"  $* }
 ```
 
 - auto-open a file created by `cputils new`:
