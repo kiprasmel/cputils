@@ -23,37 +23,19 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EX
 
     INPUT_FILE                  = input file to take input from.
                                   default: FILENAME.cpp.in
-
     
-    -- EXTRA_COMPILER_ARGS      = stop parsing args and forward everything
-                                  to the compiler.
+    -a \"EXTRA_COMPILER_ARGS\"    = pass arguments to the compiler (quotes necessary),
+                                  can be used multiple times.
+
                                   hint: set custom #define's from here
-                                        or override default settings etc.
+                                  or override default settings etc.
+                                  very useful for shell aliases / functions
+                                  (see the examples below)
 
-    -a \"EXTRA_COMPILER_ARGS\"    = forward the argument EXTRA_COMPILER_ARGS
-                                  to the compiler, but when aliasing.
-
-                                  you'll likely want to create some aliases,
-                                  e.g.
-
-                                  \`xd() { cputils-run \$* -- -DDEBUG }\`
-
-                                  for debugging,
-                                  but then once you use \`--\` more than once -
-                                  in an alias AND when editing in the command line
-                                  for providing extra flags - everything will break
-                                  since there'll be multiple \`--\` flags.
-
-                                  i.e., \`-a\` and \`--\` are the same thing, except:
-                                  \`-a\`:
-                                      can be used multiple times
-                                      each time it's used, the whole argument must be in quotes
-                                  \`--\`:
-                                      can be used only once
-                                      the whole argument need not be in quotes
-
-                                  use \`-a\` for creating /comfy/ aliases,
-                                  and \`--\` for quick modifications once already in the command line
+    -- EXTRA_COMPILER_ARGS      = same as \`-a\`, just for extra convenience
+                                (no quotes needed, must be used at most once, since
+                                \`--\` will stop argument parsing and will forward
+                                everything to the compiler)
 
 
   examples:
@@ -67,7 +49,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EX
       cputils-run a.cpp -    -- -DDEBUG -std=c++17 -Wextra -Wpedantic
       cputils-run a.cpp - in -- -DEVAL  -std=c++20 -O2
 
-    using aliases:
+    using alias functions:
       .bashrc / .zshrc etc.:
 
       xd() { cputils-run -a \"-DDEBUG\" $* }
