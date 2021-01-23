@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 # cputils - competitive programming utilities
 
+USAGE="\
+usage:
+
+cputils COMMAND [COMMAND_ARGS...]
+
+COMMAND:
+        new        - new file from template
+        run DEBUG  - run in debug           mode
+        run EVAL   - run in eval/production mode
+        cfgen      - codeforces generator from template
+    
+
+see individual commands for details
+
+"
+
 DIRNAME="$(dirname "$0")"
 
 case "$1" in
@@ -8,42 +24,16 @@ case "$1" in
 		shift
 		/usr/bin/env bash "$DIRNAME/cputils-new" $*
 		;;
-	n)
-		shift
-		/usr/bin/env bash "$DIRNAME/cputils-new" $*
-		;;
 	run)
 		shift
 		/usr/bin/env bash "$DIRNAME/cputils-run" $*
-		;;
-	d)
-		shift
-		/usr/bin/env bash "$DIRNAME/cputils-run" "DEBUG" $*
-		;;
-	p)
-		shift
-		/usr/bin/env bash "$DIRNAME/cputils-run" "EVAL" $*
 		;;
 	cfgen)
 		shift
 		/usr/bin/env bash "$DIRNAME/cputils-cfgen" $*
 		;;
 	*)
-		printf "\
-usage:
-
-cputils COMMAND [COMMAND_ARGS...]
-
-COMMAND:
-        new        - new file from template      (alias cputils n)
-        run DEBUG  - run in debug           mode (alias cputils d)
-        run EVAL   - run in eval/production mode (alias cputils p)
-        cfgen      - codeforces generator from template
-    
-
-see individual commands for details
-
-"
+		printf "$USAGE"
 		exit 1
 		;;
 esac
