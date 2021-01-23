@@ -1,40 +1,92 @@
 #!/usr/bin/env bash
-# m - as in main.cpp - create a new file from a given (or default) template
-
-USAGE="\
-usage: m new_filename.cpp [<options>]
-
-opts:
-    -t [NAME]  use template by name (template.NAME.cpp) (defaults to template.cpp)
-	-y         non-interactive (do not open file with editor etc.)
-
-"
 
 CFGDIR="$HOME/.config/cputils"
 
-OUTFILE="$1"
+USAGE="\
+usage:
 
-[ -z "$OUTFILE" ] && {
+cputils-new NEW_FILENAME.EXTENSION [OPTIONS]
+
+  where
+    NEW_FILENAME      = the name of a new file
+  
+    EXTENSION         = the file extension (not limited to \"cpp\" -
+                                            you can create templates for various langs)
+
+    -t TEMPLATE_ID    = use template by id (template.TEMPLATE_ID.EXTENSION)
+                        default: unset, thus \"template.cpp\"
+
+                        templates should be added to the config directory
+                        (\"\$HOME/.config/cputils\"),
+                        named \"template.TEMPLATE_ID.EXTENSION\",
+                        e.g.  \"template.t.cpp\" (maybe a regular template with test cases?),
+                              \"template.py\"    (default for python files),
+                              \"template.js\"    (default for javascript files) etc.
+  
+    -y                = non-interactive (do not open file with editor etc.)
+                        default: false; will open created file with editor
+                        if editor specified and enabled in the config
+
+
+  examples:
+    cputils-new a.cpp               # create file a.cpp from default template.cpp
+    cputils-new b.cpp -t t          # create file b.cpp from         template.t.cpp
+    cputils-new c.py                # create file c.py  from default template.py
+    cputils-new d.js                # create file d.js  from default template.js
+
+"
+
+#
+# https://stackoverflow.com/a/4170409/9285308
+#
+while (( $# )); do
+	case "$1" in 
+		-t)
+			shift
+			TEMPLATE_ID="$1"
+			shift
+			;;
+		-t*)
+			TEMPLATE_ID="${1#*t}"
+			shift
+			;;
+
+		-y)
+			shift
+			NON_INTERACTIVE="1"
+			;;
+
+		*)  [ -z "$FULL_FILENAME" ] && {
+				FULL_FILENAME="$1"
+				shift
+			} || {
+				printf "$USAGE"
+				exit 1
+			}
+			;;
+	esac
+done
+
+[ -z "$FULL_FILENAME" ] && {
 	printf "$USAGE"
 	exit 1
 }
 
-case "$2" in
-	-t)   INFILE="$CFGDIR/template.t.cpp" ;;
-	-ths) INFILE="$CFGDIR/template.hs"    ;;
-	*)    INFILE="$CFGDIR/template.cpp"   ;;
-esac
+FILENAME="${FULL_FILENAME%.*}"
+EXTENSION="${FULL_FILENAME##*.}"
 
-# TODO try any file extension
-# TODO even better - use the extension that was profided to "OUTFILE"
-cp -i -v "$INFILE" "$OUTFILE"
+[ -z "$TEMPLATE_ID" ] && {
+	TEMPLATE="$CFGDIR/template.$EXTENSION" 
+} || {
+	TEMPLATE="$CFGDIR/template.$TEMPLATE_ID.$EXTENSION"
+}
 
-case "$3" in 
-	-y)
-		;;
-	*)
-		source "$HOME/.config/cputils/cputils.config.bash"
-		open_with_editor "$OUTFILE"
-		;;
-esac
+echo "$TEMPLATE; $FULL_FILENAME"
+
+cp -i -v "$TEMPLATE" "$FULL_FILENAME"
+
+[ -z "$NON_INTERACTIVE" ] && {
+	source "$HOME/.config/cputils/cputils.config.bash"
+	open_with_editor "$FULL_FILENAME"
+}
 

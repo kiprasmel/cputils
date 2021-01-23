@@ -16,18 +16,100 @@ make install
 
 ## Usage
 
-```console
+### Quickstart
+
+```sh
+cputils new a.cpp
+cputils run a.cpp
+```
+
+### Complete info
+
+```sh
+$ cputils
+
+usage:
+
 cputils COMMAND [COMMAND_ARGS...]
 
 COMMAND:
-        new        - new file from template      (alias n)
+        new        - new file from template      (alias cputils n)
         run DEBUG  - run in debug           mode (alias cputils d)
-        run EVAL   - run in eval/production mode (alias p)
+        run EVAL   - run in eval/production mode (alias cputils p)
         cfgen      - codeforces generator from template
-	
+
 
 see individual commands for details
+```
 
+```sh
+$ cputils new
+
+usage:
+
+cputils-new NEW_FILENAME.EXTENSION [OPTIONS]
+
+  where
+    NEW_FILENAME      = the name of a new file
+  
+    EXTENSION         = the file extension (not limited to "cpp" -
+                                            you can create templates for various langs)
+
+    -t TEMPLATE_ID    = use template by id (template.TEMPLATE_ID.EXTENSION)
+                        default: unset, thus "template.cpp"
+
+                        templates should be added to the config directory
+                        ("$HOME/.config/cputils"),
+                        named "template.TEMPLATE_ID.EXTENSION",
+                        e.g.  "template.t.cpp" (maybe a regular template with test cases?),
+                              "template.py"    (default for python files),
+                              "template.js"    (default for javascript files) etc.
+  
+    -y                = non-interactive (do not open file with editor etc.)
+                        default: false; will open created file with editor
+                        if editor specified and enabled in the config
+  
+  
+  examples:
+    cputils-new a.cpp               # create file a.cpp from default template.cpp
+    cputils-new b.cpp -t t          # create file b.cpp from         template.t.cpp
+    cputils-new c.py                # create file c.py  from default template.py
+    cputils-new d.js                # create file d.js  from default template.js
+```
+
+```sh
+$ cputils run
+
+cputils-run "MODE_AND_EXTRA_COMPILER_ARGS" FILENAME.cpp [- [INPUT_FILE]]
+
+  where
+    MODE_AND_EXTRA_COMPILER_ARGS    = DEBUG or EVAL or custom #define
+                                      plus any other arguments to the g++ compiler
+                                      note: don't forget quotes around it if
+                                            you're passing in stuff with spaces
+
+    FILENAME.cpp                    = source file you want to run
+
+    -                               = reuse previous input
+                                      instead of reading from clipboard
+
+    INPUT_FILE                      = input file to take input from.
+                                      default: FILENAME.cpp.in
+
+
+  examples:
+    with DEBUG define:
+      cputils-run DEBUG a.cpp               # reads input from clipboard
+      cputils-run DEBUG a.cpp -             # reads input from file "a.cpp.in"
+      cputils-run DEBUG a.cpp - in          # reads input from file "in"
+
+    with EVAL define:
+      cputils-run EVAL  a.cpp               # reads input from clipboard
+      cputils-run EVAL  a.cpp -             # reads input from file "a.cpp.in"
+      cputils-run EVAL  a.cpp - in          # reads input from file "in"
+
+    with define + extra args to the g++ compiler (quotes necessary):
+      cputils-run "DEBUG -std=c++98 -Wextra -Wpedantic -O2"  a.cpp
 ```
 
 ## Enhancements
@@ -35,14 +117,15 @@ see individual commands for details
 - for extra speed create an alias in i.e. `.bashrc` / `.zshrc` (replace `x` with whatever alias you want):
 
 ```sh
-x() {
-	cputils $*
-}
+x()  { cputils $* }
+xr() { cputils run $* }
+xd() { cputils run DEBUG $* }
+xp() { cputils run EVAL  $* }
 ```
 
 - auto-open a file created by `cputils new`:
 
-edit the config file `~/.config/cputils/cputils.config.bash` -- inside the `open_with_editor` function provide a way to open the file `"$1"` with your editor:
+edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `open_with_editor` function provide a way to open the file `"$1"` with your editor:
 
 ```sh
 #!/usr/bin/env bash
@@ -70,5 +153,11 @@ cd "$HOME/.config/cputils/"
 
 and overwrite the default `template.cpp`;
 
-additionally - create other templates named `template.TEMPLATE_NAME.cpp` and use them via `cputils new file.cpp -t TEMPLATE_NAME`
+additionally - create other templates named `template.TEMPLATE_ID.cpp` and use them via
+
+```sh
+cputils new file.cpp -t TEMPLATE_ID
+```
+
+you can even have templates for other languages too - just use a different file extension (like `template.py`, `template.js` etc.)
 
