@@ -153,14 +153,13 @@ xp() { cputils run -a "-DEVAL"  $* }
 
 edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `open_with_editor` function provide a way to open the file `"$1"` with your editor:
 
-```sh
-#!/usr/bin/env bash
+```bash
 # cputils.config.bash
 
 # ...
 
 open_with_editor() {
-	exit 0 # comment out this line and choose your editor if you want to
+	exit 1 # comment out this line and choose your editor if you want to
 
 	# vim "$1"
 	# geany "$1" &
@@ -170,6 +169,31 @@ export -f open_with_editor
 
 # ...
 ```
+
+- provide a source file hashing function to avoid recompilation if no changes occured
+
+edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `create_hash` function provide a way to hash the file `"$1"`:
+
+```bash
+# cputils.config.bash
+
+# ...
+
+create_hash() {
+	exit 1 # comment out this line to enable and choose the appropriate method
+	
+	# printf "$(sha256sum "$1" | awk '{ print $1 }')"
+	# printf "$(openssl dgst -sha256 -r "$1" | awk '{ print $1 }')"
+
+	# note: might be different for Mac, see https://stackoverflow.com/a/20217018/9285308
+}
+export -f create_hash
+
+# ...
+
+```
+
+> note - we handle other side effects ourselves (EXTRA_COMPILER_ARGS and (hopefully) anything else that should invalidate the cache). Create an issue if we missed something
 
 - customize file templates for `cputils new`:
 

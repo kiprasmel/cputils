@@ -152,7 +152,8 @@ done
 #
 INPUT_FILE_PATH="$(dirname "$INPUT_FILE")"
 INPUT_FILE_FILENAME="$(basename "$INPUT_FILE")"
-OUTPUT_FILE="$INPUT_FILE_PATH/$(trim_extension "$INPUT_FILE_FILENAME").out"
+INPUT_FILE_FILENAME_EXTLESS="$(trim_extension "$INPUT_FILE_FILENAME")"
+OUTPUT_FILE="$INPUT_FILE_PATH/$INPUT_FILE_FILENAME_EXTLESS.out"
 
 INPUT_CACHE_FILE="$INPUT_FILE.$INPUT_CACHE_FILE_EXTENSION"
 touch "$INPUT_CACHE_FILE"
@@ -188,6 +189,44 @@ https://github.com/kiprasmel/cputils
 	exit 1
 fi
 
+# determine if it's safe to skip compilation 
+
+INPUT_HASH_FILE="$INPUT_FILE_FILENAME.hash"
+NEW_SOURCE_FILE_HASH="$(create_hash "$INPUT_FILE")"
+CREATE_HASH_RETURN_STATUS=$?
+
+if [ "$CREATE_HASH_RETURN_STATUS" -ne 0 ]; then
+	HASHING_ENABLED=0
+else
+	HASHING_ENABLED=1
+
+	touch "$INPUT_HASH_FILE"
+	OLD_HASH="$(cat "$INPUT_HASH_FILE")"
+fi
+
+#
+# the outcome depends on other side effects - extra args to the compiler
+# come to mind. We might've missed something -- take care
+# 
+# the separator '@' is picked arbitrarily; it's only important that it's there
+#
+NEW_HASH="$NEW_SOURCE_FILE_HASH @ -a \"$EXTRA_FROM_ALIAS\" @ \$* \"$*\""
+
+#
+# the user by default will have the 'create_hash' function disabled,
+# thus $NEW_HASH will be an empty string, which is not allowed,
+# thus we never skip compilation
+#
+# otherwise, we do not check the $OLD_HASH, since it is allowed
+# for it to be empty (always happens at the very first run)
+# 
+#
+if [ "$OLD_HASH" = "$NEW_HASH" ] && [ "$HASHING_ENABLED" -eq 1 ]; then
+	SAFE_TO_SKIP_COMPILATION=1
+else
+	SAFE_TO_SKIP_COMPILATION=0
+fi
+
 # go go go
 
 printf "BEGIN INPUT\n$INPUT\nEND INPUT\n"
@@ -204,11 +243,29 @@ if command -v /usr/bin/env time &>/dev/null; then
 	# and act as multiple different arguments
 	# as opposed to a single one
 
-	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
-	printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
+	if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
+		printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
+
+		printf "NO_RECOMPILE\n"
+	else
+		g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
+		if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi && \
+		printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
+
+	fi
 
 else
-	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
-	printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
+	if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
+		printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
+
+		print "NO_RECOMPILE\n"
+	else
+		g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
+		if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi && \
+		printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
+	fi
+
 fi
+
+printf "\n"
 
