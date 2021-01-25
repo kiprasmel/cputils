@@ -15,13 +15,13 @@ paste_from_clipboard() {
 	elif command -v pbpaste &>/dev/null; then printf "$(pbpaste)"
 	elif command -v xsel    &>/dev/null; then printf "$(xsel --clipboard)"
 	elif ls /dev/clipboard  &>/dev/null; then printf "$(cat /dev/clipboard)"
-	else exit 1
+	else return 1
 	fi
 }
 export -f paste_from_clipboard
 
 open_with_editor() {
-	exit 1 # comment out this line and choose your editor if you want to
+	return 1 # comment out this line and choose your editor if you want to
 
 	# vim "$1"
 	# code "$1"
@@ -37,7 +37,7 @@ export -f open_with_editor
 # if nothing has changed
 #
 create_hash() {
-	exit 1 # comment out this line to enable and choose the appropriate method
+	return 1 # comment out this line to enable and choose the appropriate method
 	
 	# printf "$(sha256sum "$1" | awk '{ print $1 }')"
 	# printf "$(openssl dgst -sha256 -r "$1" | awk '{ print $1 }')"
