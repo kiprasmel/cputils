@@ -227,44 +227,39 @@ else
 	SAFE_TO_SKIP_COMPILATION=0
 fi
 
+# run based on time cmd (best if GNU /usr/bin/time is available)
+if command -v /usr/bin/env time &>/dev/null; then
+	runner() {
+		TIME_CMD="/usr/bin/env time"
+		TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss\n"
+
+		printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
+	}
+else
+	runner() {
+		printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
+	}
+fi
+
 # go go go
 
 printf "BEGIN INPUT\n$INPUT\nEND INPUT\n"
 printf "$INPUT_INFO\n\n"
 
-# run based on time cmd (best if GNU /usr/bin/time is available)
-if command -v /usr/bin/env time &>/dev/null; then
 
-	TIME_CMD="/usr/bin/env time"
-	TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss\n"
+if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
+	runner
 
+	printf "NO_RECOMPILE\n"
+else
 	# do NOT quote $EXTRA_FROM_ALIAS nor $*
 	# because this allows them to expand
 	# and act as multiple different arguments
 	# as opposed to a single one
 
-	if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
-		printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
-
-		printf "NO_RECOMPILE\n"
-	else
-		g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
-		if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi && \
-		printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
-
-	fi
-
-else
-	if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
-		printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
-
-		print "NO_RECOMPILE\n"
-	else
-		g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
-		if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi && \
-		printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
-	fi
-
+	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
+	if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi && \
+	runner
 fi
 
 printf "\n"
