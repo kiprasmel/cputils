@@ -143,6 +143,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTR
 
 ```sh
 x()  { cputils $* }
+xn() { cputils new $* }
 xr() { cputils run $* }
 xd() { cputils run -a "-DDEBUG" $* }
 xp() { cputils run -a "-DEVAL"  $* }
