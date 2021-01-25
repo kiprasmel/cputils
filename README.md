@@ -123,7 +123,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTR
     using alias functions:
       .bashrc / .zshrc etc.:
 
-      xd() { cputils-run -a "-DDEBUG"  }
+      xd() { cputils-run -a "-DDEBUG" $* }
 
     simple (using aliases):
       xd a.cpp               # reads input from clipboard
