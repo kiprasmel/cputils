@@ -86,7 +86,7 @@ echo "$TEMPLATE; $FULL_FILENAME"
 cp -i -v "$TEMPLATE" "$FULL_FILENAME"
 
 [ -z "$NON_INTERACTIVE" ] && {
-	source "$HOME/.config/cputils/cputils.config.bash"
+	source "$CFGDIR/cputils.config.bash"
 	open_with_editor "$FULL_FILENAME"
 }
 
