@@ -104,9 +104,9 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTR
                                   (see the examples below)
 
     -- EXTRA_COMPILER_ARGS      = same as `-a`, just for extra convenience
-                                (no quotes needed, must be used at most once, since
-                                `--` will stop argument parsing and will forward
-                                everything to the compiler)
+                                  (no quotes needed, must be used at most once, since
+                                  `--` will stop argument parsing and will forward
+                                  everything to the compiler)
 
 
   examples:
