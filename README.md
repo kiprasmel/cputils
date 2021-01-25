@@ -154,6 +154,30 @@ xd() { cputils run -a "-DDEBUG" $* }
 xp() { cputils run -a "-DEVAL"  $* }
 ```
 
+- auto read input from clipboard with `cputils run`:
+
+edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `paste_from_clipboard` function provide a way to paste input from your clipboard if it's not already handled:
+
+```bash
+# cputils.config.bash
+
+# ...
+
+paste_from_clipboard() {
+	if   command -v xclip   &>/dev/null; then printf "$(xclip -selection clipboard -o || xclip -selection primary -o)"
+	elif command -v pbpaste &>/dev/null; then printf "$(pbpaste)"
+	elif command -v xsel    &>/dev/null; then printf "$(xsel --clipboard)"
+	elif ls /dev/clipboard  &>/dev/null; then printf "$(cat /dev/clipboard)"
+	# add your's!
+	else exit 1
+	fi
+}
+export -f paste_from_clipboard
+
+# ...
+```
+
+
 - auto-open a file created by `cputils new`:
 
 edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `open_with_editor` function provide a way to open the file `"$1"` with your editor:

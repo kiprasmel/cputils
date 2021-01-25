@@ -162,7 +162,28 @@ touch "$INPUT_CACHE_FILE"
 
 if [ "$WHICH_INPUT_USED" = "CLIPBOARD" ]; then
 	INPUT_INFO="CLIPBOARD"
-	INPUT="$(xclip -selection clipboard -o || xclip -selection primary -o)"
+	INPUT="$(paste_from_clipboard)"
+	CLIPBOARD_RETURN_STATUS=$?
+
+	if [ -z "$INPUT" ]; then
+		if [ $CLIPBOARD_RETURN_STATUS -eq 1 ]; then
+			printf "
+cputils-run error! we couldn't read input from your clipboard.
+
+Either:
+  a) use an input file (via \`cputils-run -\` or \`cputils-run - input_file\`, or
+  b) go to the config file \`$CFGDIR/cputils.config.bash\`
+     and provide a way to paste from your clipboard
+     in the \`paste_from_clipboard\` function.
+
+You got it!
+
+"
+		exit 1
+
+		# else, clipboard is empty -- that's fine
+		fi
+	fi
 
 	# prepend the input from clipboard into the cache file
 	mv "$INPUT_CACHE_FILE" "$INPUT_CACHE_FILE.bp"
@@ -228,7 +249,7 @@ else
 fi
 
 # run based on time cmd (best if GNU /usr/bin/time is available)
-if command -v /usr/bin/env time &>/dev/null; then
+if command -v time &>/dev/null; then
 	runner() {
 		TIME_CMD="/usr/bin/env time"
 		TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss\n"

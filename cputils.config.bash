@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
-# $HOME/.config/cputils/cputils.config.bash
+# cputils.config.bash
+
+#
+# we attempt to handle at least the most common clipboard tools here.
+# add yours if it's missing
+# (see https://stackoverflow.com/questions/749544/pipe-to-from-the-clipboard-in-bash-script
+#  and https://stackoverflow.com/questions/592620/how-can-i-check-if-a-program-exists-from-a-bash-script )
+#
+# it'd be great if you could create a pull request too!
+# https://github.com/kiprasmel/cputils/blob/master/cputils-run
+#
+paste_from_clipboard() {
+	if   command -v xclip   &>/dev/null; then printf "$(xclip -selection clipboard -o || xclip -selection primary -o)"
+	elif command -v pbpaste &>/dev/null; then printf "$(pbpaste)"
+	elif command -v xsel    &>/dev/null; then printf "$(xsel --clipboard)"
+	elif ls /dev/clipboard  &>/dev/null; then printf "$(cat /dev/clipboard)"
+	else exit 1
+	fi
+}
+export -f paste_from_clipboard
 
 open_with_editor() {
 	exit 1 # comment out this line and choose your editor if you want to
