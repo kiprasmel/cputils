@@ -153,7 +153,16 @@ done
 INPUT_FILE_PATH="$(dirname "$INPUT_FILE")"
 INPUT_FILE_FILENAME="$(basename "$INPUT_FILE")"
 INPUT_FILE_FILENAME_EXTLESS="$(trim_extension "$INPUT_FILE_FILENAME")"
-OUTPUT_FILE="$INPUT_FILE_PATH/$INPUT_FILE_FILENAME_EXTLESS.out"
+
+#
+# We've decided to output the file WITH the ".cpp" extension
+# (and then add ".out"),
+# since this allows for faster file completion in the terminal!
+#
+# Might make configurable
+#
+### OUTPUT_FILE="$INPUT_FILE_PATH/$INPUT_FILE_FILENAME_EXTLESS.out"
+OUTPUT_FILE="$INPUT_FILE_PATH/$INPUT_FILE_FILENAME.out"
 
 INPUT_CACHE_FILE="$INPUT_FILE.$INPUT_CACHE_FILE_EXTENSION"
 touch "$INPUT_CACHE_FILE"
