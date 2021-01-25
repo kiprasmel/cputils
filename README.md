@@ -93,7 +93,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTR
                                   instead of reading from clipboard
 
     INPUT_FILE                  = input file to take input from.
-                                  default: FILENAME.cpp.in
+                                  default: FILENAME.cpp.txt
     
     -a "EXTRA_COMPILER_ARGS"    = pass arguments to the compiler (quotes necessary),
                                   can be used multiple times.
@@ -112,7 +112,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTR
   examples:
     simple:
       cputils-run a.cpp               # reads input from clipboard
-      cputils-run a.cpp -             # reads input from file "a.cpp.in"
+      cputils-run a.cpp -             # reads input from file "a.cpp.txt"
       cputils-run a.cpp - in          # reads input from file "in"
 
     with args to the compiler:
@@ -127,7 +127,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTR
 
     simple (using aliases):
       xd a.cpp               # reads input from clipboard
-      xd a.cpp -             # reads input from file "a.cpp.in"
+      xd a.cpp -             # reads input from file "a.cpp.txt"
       xd a.cpp - in          # reads input from file "in"
 
     with args to the compiler (using aliases):

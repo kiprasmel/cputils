@@ -10,6 +10,21 @@
 # at the end of the execution chain)
 #
 
+CFGDIR="$HOME/.config/cputils"
+source "$CFGDIR/cputils.config.bash"
+
+#
+# the reason we switched from ".in" to ".txt"
+# is because the editor(e.g. neovim + coc-clangd)
+# would recognize the filetype of ".cpp.in" to be "cpp"
+# and thus the linter & other annyoing stuff would jump in
+# even though the file was just a regular input file,
+# thus we've switched to just regular ".txt"
+#
+# still configurable tho:D
+#
+[ -z "$INPUT_CACHE_FILE_EXTENSION" ] && INPUT_CACHE_FILE_EXTENSION="txt"
+
 USAGE="\
 usage:
 
@@ -22,7 +37,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EX
                                   instead of reading from clipboard
 
     INPUT_FILE                  = input file to take input from.
-                                  default: FILENAME.cpp.in
+                                  default: FILENAME.cpp.$INPUT_CACHE_FILE_EXTENSION
     
     -a \"EXTRA_COMPILER_ARGS\"    = pass arguments to the compiler (quotes necessary),
                                   can be used multiple times.
@@ -41,7 +56,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EX
   examples:
     simple:
       cputils-run a.cpp               # reads input from clipboard
-      cputils-run a.cpp -             # reads input from file \"a.cpp.in\"
+      cputils-run a.cpp -             # reads input from file \"a.cpp.$INPUT_CACHE_FILE_EXTENSION\"
       cputils-run a.cpp - in          # reads input from file \"in\"
 
     with args to the compiler:
@@ -56,7 +71,7 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EX
 
     simple (using aliases):
       xd a.cpp               # reads input from clipboard
-      xd a.cpp -             # reads input from file \"a.cpp.in\"
+      xd a.cpp -             # reads input from file \"a.cpp.$INPUT_CACHE_FILE_EXTENSION\"
       xd a.cpp - in          # reads input from file \"in\"
 
     with args to the compiler (using aliases):
@@ -130,7 +145,7 @@ INPUT_FILE_PATH="$(dirname "$INPUT_FILE")"
 INPUT_FILE_FILENAME="$(basename "$INPUT_FILE")"
 OUTPUT_FILE="$INPUT_FILE_PATH/$(trim_extension "$INPUT_FILE_FILENAME").out"
 
-INPUT_CACHE_FILE="$INPUT_FILE.in"
+INPUT_CACHE_FILE="$INPUT_FILE.$INPUT_CACHE_FILE_EXTENSION"
 touch "$INPUT_CACHE_FILE"
 
 # determine INPUT and INPUT_INFO

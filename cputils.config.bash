@@ -12,3 +12,6 @@ open_with_editor() {
 }
 export -f open_with_editor
 
+INPUT_CACHE_FILE_EXTENSION="txt"
+export $INPUT_CACHE_FILE_EXTENSION
+
