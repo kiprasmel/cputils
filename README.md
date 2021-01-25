@@ -99,6 +99,11 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTR
 
     INPUT_FILE                  = input file to take input from.
                                   default: FILENAME.cpp.txt
+
+    --fc, --force-recompile     = force recompilation no matter if the hash matches or not
+                                  default: false
+                                  (does not matter if user has not provided a hashing function
+                                   in their config. See README for more info)
     
     -a "EXTRA_COMPILER_ARGS"    = pass arguments to the compiler (quotes necessary),
                                   can be used multiple times.

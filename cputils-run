@@ -38,6 +38,11 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EX
 
     INPUT_FILE                  = input file to take input from.
                                   default: FILENAME.cpp.$INPUT_CACHE_FILE_EXTENSION
+
+    --fc, --force-recompile     = force recompilation no matter if the hash matches or not
+                                  default: false
+                                  (does not matter if user has not provided a hashing function
+                                   in their config. See README for more info)
     
     -a \"EXTRA_COMPILER_ARGS\"    = pass arguments to the compiler (quotes necessary),
                                   can be used multiple times.
@@ -106,6 +111,14 @@ while (( $# )); do
 			# stop parsing and forward rest of arguments
 			# to the compiler
 			;;
+		--fc)
+			FORCE_RECOMPILE=1
+			shift
+			;;
+		--force-recompile)
+			FORCE_RECOMPILE=1
+			shift
+			;;
 		-a)
 			shift
 			EXTRA_FROM_ALIAS="$EXTRA_FROM_ALIAS $1"
@@ -138,6 +151,7 @@ while (( $# )); do
 done
 
 [ -z "$WHICH_INPUT_USED" ] && WHICH_INPUT_USED="CLIPBOARD"
+[ -z "$FORCE_RECOMPILE" ] && FORCE_RECOMPILE=0
 
 # echo "INPUT_FILE $INPUT_FILE; WHICH_INPUT_USED $WHICH_INPUT_USED; CUSTOM_INPUT_FILE $CUSTOM_INPUT_FILE;"
 
@@ -251,7 +265,7 @@ NEW_HASH="$NEW_SOURCE_FILE_HASH @ -a \"$EXTRA_FROM_ALIAS\" @ \$* \"$*\""
 # for it to be empty (always happens at the very first run)
 # 
 #
-if [ "$OLD_HASH" = "$NEW_HASH" ] && [ "$HASHING_ENABLED" -eq 1 ]; then
+if [ "$OLD_HASH" = "$NEW_HASH" ] && [ "$HASHING_ENABLED" -eq 1 ] && [ "$FORCE_RECOMPILE" -ne 1 ]; then
 	SAFE_TO_SKIP_COMPILATION=1
 else
 	SAFE_TO_SKIP_COMPILATION=0
