@@ -114,6 +114,15 @@ while (( $# )); do
 		*)
 			if [ -z "$INPUT_FILE" ]; then
 				INPUT_FILE="$1"
+
+				[[ "$INPUT_FILE" =~ \.$INPUT_CACHE_FILE_EXTENSION$ ]] && {
+					# remove the configured extension suffix -
+					# likely a mistake by the user,
+					# since we're adding the suffix ourselves
+
+					INPUT_FILE="$(trim_extension "$INPUT_FILE")"
+				}
+
 				shift
 			elif [ ! -z "$WHICH_INPUT_USED" ]; then
 				WHICH_INPUT_USED="FILE_CUSTOM"
