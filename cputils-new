@@ -53,7 +53,7 @@ while (( $# )); do
 
 		-y)
 			shift
-			NON_INTERACTIVE="1"
+			NON_INTERACTIVE=1
 			;;
 
 		*)  [ -z "$FULL_FILENAME" ] && {
@@ -72,6 +72,8 @@ done
 	exit 1
 }
 
+[ -z "$NON_INTERACTIVE" ] && NON_INTERACTIVE=0
+
 FILENAME="${FULL_FILENAME%.*}"
 EXTENSION="${FULL_FILENAME##*.}"
 
@@ -85,8 +87,19 @@ echo "$TEMPLATE; $FULL_FILENAME"
 
 cp -i -v "$TEMPLATE" "$FULL_FILENAME"
 
-[ -z "$NON_INTERACTIVE" ] && {
+[ "$NON_INTERACTIVE" -eq 0 ] && {
 	source "$CFGDIR/cputils.config.bash"
 	open_with_editor "$FULL_FILENAME"
+	OPEN_WITH_EDITOR_RETURN_STATUS=$?
+
+	[ "$OPEN_WITH_EDITOR_RETURN_STATUS" -ne 0 ] && {
+		printf "
+cputils-new: warning
+
+open_with_editor (function from config) exited with non-zero code ($OPEN_WITH_EDITOR_RETURN_STATUS)
+
+"
+
+	}
 }
 
