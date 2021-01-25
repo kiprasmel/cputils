@@ -73,6 +73,10 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EX
 	exit 1
 }
 
+trim_extension() {
+	printf "${1%.*}"
+}
+
 EXTRA_FROM_ALIAS=""
 
 while (( $# )); do
@@ -115,7 +119,16 @@ done
 
 # remove extension & add ".out" suffix (easier to .gitignore etc)
 # https://stackoverflow.com/a/36341390/9285308
-OUTPUT_FILE="${INPUT_FILE%.*}.out"
+#
+# the path and filename need to be extracted
+# to handle both cases:
+# a) user provides path to the filename
+# b) user provides filename (path is current working dir)
+# with this, it works in both cases
+#
+INPUT_FILE_PATH="$(dirname "$INPUT_FILE")"
+INPUT_FILE_FILENAME="$(basename "$INPUT_FILE")"
+OUTPUT_FILE="$INPUT_FILE_PATH/$(trim_extension "$INPUT_FILE_FILENAME").out"
 
 INPUT_CACHE_FILE="$INPUT_FILE.in"
 touch "$INPUT_CACHE_FILE"
@@ -168,10 +181,10 @@ if command -v /usr/bin/env time &>/dev/null; then
 	# as opposed to a single one
 
 	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
-	printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "./$OUTPUT_FILE")
+	printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
 
 else
 	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
-	printf "$INPUT\n" | (time                       "./$OUTPUT_FILE")
+	printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
 fi
 
