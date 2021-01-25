@@ -14,6 +14,11 @@ cd cputils
 make install
 ```
 
+### Dependencies
+
+- (semi-optional) `xclip` / `pbpaste` / `xsel` / `/dev/clipboard` or any other tool to paste from clipboard
+- (optional) GNU time (`/usr/bin/env time`) for printing not only time, but also memory usage
+
 ## Usage
 
 ### Quickstart
