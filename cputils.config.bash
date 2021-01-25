@@ -25,8 +25,8 @@ open_with_editor() {
 
 	# vim "$1"
 	# code "$1"
-	# geany "$1" &
 	# emacs "$1"
+	# geany "$1" &
 	# emacsclient -t $* || { emacs --daemon && emacsclient -t $* } # terminal emacs
 }
 export -f open_with_editor
