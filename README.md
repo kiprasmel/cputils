@@ -14,10 +14,28 @@ cd cputils
 make install
 ```
 
-### Dependencies
+<details>
+
+<summary>
+Dependencies
+</summary>
 
 - (semi-optional) `xclip` / `pbpaste` / `xsel` / `/dev/clipboard` or any other tool to paste from clipboard
 - (optional) GNU time (`/usr/bin/env time`) for printing not only time, but also memory usage
+ 
+</details>
+
+## Features
+
+- create files from your custom templates
+	- auto-open created file with your editor
+- run instantly without recompilation if nothing changed
+- forward arguments to the compiler
+	- shell aliasing fully supported
+- see memory usage
+- more to come @ the [Roadmap](https://github.com/kiprasmel/cputils/issues/1)
+
+Everything above is customizable — see [#Usage](#Usage) and [#Enhancements](#Enhancements) below.
 
 ## Usage
 
@@ -243,4 +261,3 @@ cputils new file.cpp -t TEMPLATE_ID
 ```
 
 you can even have templates for other languages too - just use a different file extension (like `template.py`, `template.js` etc.)
-
