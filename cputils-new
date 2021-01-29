@@ -24,8 +24,14 @@ cputils-new NEW_FILENAME.EXTENSION [OPTIONS]
                               \"template.js\"    (default for javascript files) etc.
   
     -y                = non-interactive (do not open file with editor etc.)
-                        default: false; will open created file with editor
+                        default: false
+
+    -i                = interactive (overrides previous \`-y\`)
+                        default: true
+                        will open created file with editor
                         if editor specified and enabled in the config
+
+    -h, --help        = show this
 
 
   examples:
@@ -55,12 +61,27 @@ while (( $# )); do
 			shift
 			NON_INTERACTIVE=1
 			;;
+		-i)
+			shift
+			NON_INTERACTIVE=0
+			;;
+
+		-h|--help)
+			shift
+			printf "$USAGE"
+			exit 0
+			;;
 
 		*)  [ -z "$FULL_FILENAME" ] && {
 				FULL_FILENAME="$1"
 				shift
 			} || {
+				printf "\nerror: unrecognized option: $1\n\n"
+
 				printf "$USAGE"
+
+				printf "\nerror: unrecognized option: $1\n\n"
+
 				exit 1
 			}
 			;;
@@ -83,7 +104,21 @@ EXTENSION="${FULL_FILENAME##*.}"
 	TEMPLATE="$CFGDIR/template.$TEMPLATE_ID.$EXTENSION"
 }
 
-echo "$TEMPLATE; $FULL_FILENAME"
+[ ! -f "$TEMPLATE" ] && {
+	printf "\
+cputils-new error:
+
+template does not exist ($TEMPLATE)
+
+you have the following templates:
+
+$(ls "$CFGDIR" | grep '^template\.')
+
+consult \`cputils-new -h\`
+
+"
+	exit 1
+}
 
 cp -i -v "$TEMPLATE" "$FULL_FILENAME"
 

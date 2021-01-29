@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # cputils - competitive programming utilities
 
+CFGDIR="$HOME/.config/cputils"
+
 USAGE="\
 usage:
 
@@ -10,6 +12,7 @@ COMMAND:
         new        - new file from template
         run        - run file
         cfgen      - codeforces generator from template
+        config     - edit the configuration file
     
 
 see individual commands for details
@@ -30,6 +33,29 @@ case "$1" in
 	cfgen)
 		shift
 		/usr/bin/env bash "$DIRNAME/cputils-cfgen" $*
+		;;
+	config)
+		shift
+		source "$CFGDIR/cputils.config.bash"
+		open_with_editor "$CFGDIR/cputils.config.bash"
+		ret=$?
+
+		[ "$ret" -ne 0 ] && {
+			>&2 printf "\
+cputils-config:
+
+  setup your editor in the config to open the config directly;
+  until then - open yourself
+
+
+    "
+			printf "$CFGDIR/cputils.config.bash\n"
+
+			>&2 printf "\n\n"
+
+			exit 1
+		}
+
 		;;
 	*)
 		printf "$USAGE"

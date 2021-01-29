@@ -20,7 +20,8 @@ make install
 Dependencies
 </summary>
 
-- (semi-optional) `xclip` / `pbpaste` / `xsel` / `/dev/clipboard` or any other tool to paste from clipboard
+- g++ (soon the compiler will be configurable -- choose yours)
+- (optional) `xclip` / `pbpaste` / `xsel` / `/dev/clipboard` or any other tool to paste from clipboard
 - (optional) GNU time (`/usr/bin/env time`) for printing not only time, but also memory usage
  
 </details>
@@ -59,6 +60,7 @@ COMMAND:
         new        - new file from template
         run        - run file
         cfgen      - codeforces generator from template
+        config     - edit the configuration file
     
 
 see individual commands for details
@@ -84,16 +86,21 @@ cputils-new NEW_FILENAME.EXTENSION [OPTIONS]
                         templates should be added to the config directory
                         ("$HOME/.config/cputils"),
                         named "template.TEMPLATE_ID.EXTENSION",
-                        e.g.  "template.cpp"   (default for cpp files),
-							  "template.t.cpp" (maybe a regular template with test cases?),
+                        e.g.  "template.t.cpp" (maybe a regular template with test cases?),
                               "template.py"    (default for python files),
                               "template.js"    (default for javascript files) etc.
   
     -y                = non-interactive (do not open file with editor etc.)
-                        default: false; will open created file with editor
+                        default: false
+
+    -i                = interactive (overrides previous `-y`)
+                        default: true
+                        will open created file with editor
                         if editor specified and enabled in the config
-  
-  
+
+    -h, --help        = show this
+
+
   examples:
     cputils-new a.cpp               # create file a.cpp from default template.cpp
     cputils-new b.cpp -t t          # create file b.cpp from         template.t.cpp
@@ -107,21 +114,28 @@ $ cputils run
 
 usage:
 
-cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTRA_COMPILER_ARGS]
+cputils-run FILENAME.cpp [OPTIONS]... [-- EXTRA_COMPILER_ARGS]
 
   where
     FILENAME.cpp                = source file you want to run
 
-    -                           = reuse previous input
-                                  instead of reading from clipboard
+    -f [INPUT_FILE]             = read input from (default) INPUT_FILE
+                                  instead of reading from stdin
 
-    INPUT_FILE                  = input file to take input from.
-                                  default: FILENAME.cpp.txt
+    INPUT_FILE                  = specify your own INPUT_FILE instead of the default
+                                  default: FILENAME.cpp.txt (configurable)
 
-    --fc, --force-recompile     = force recompilation no matter if the hash matches or not
+    -c                          = read input from clipboard
+
+    -r, --recompile             = force recompilation no matter if the file hash
+                                  matches previously compiled file's hash
                                   default: false
-                                  (does not matter if user has not provided a hashing function
-                                   in their config. See README for more info)
+
+                                  note: this does not matter if the user has not
+                                  provided a hashing function in their config.
+                                  see README for more info
+
+    -e, --edit                  = edit the INPUT_FILE with configured editor
     
     -a "EXTRA_COMPILER_ARGS"    = pass arguments to the compiler (quotes necessary),
                                   can be used multiple times.
@@ -132,36 +146,42 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a "EXTRA_COMPILER_ARGS"]... [-- EXTR
                                   (see the examples below)
 
     -- EXTRA_COMPILER_ARGS      = same as `-a`, just for extra convenience
-                                  (no quotes needed, must be used at most once, since
-                                  `--` will stop argument parsing and will forward
-                                  everything to the compiler)
+                                  (no quotes needed, must be used at most once,
+                                  since `--` will stop argument parsing
+                                  and will forward everything to the compiler)
+
+    -h                          = see this
+
+    --help                      = see this + examples (even if hidden via config)
 
 
-  examples:
-    simple:
-      cputils-run a.cpp               # reads input from clipboard
-      cputils-run a.cpp -             # reads input from file "a.cpp.txt"
-      cputils-run a.cpp - in          # reads input from file "in"
+examples (hideable via config):
 
-    with args to the compiler:
-      cputils-run a.cpp      -- -DDEBUG -std=c++98 -Wextra
-      cputils-run a.cpp -    -- -DDEBUG -std=c++17 -Wextra -Wpedantic
-      cputils-run a.cpp - in -- -DEVAL  -std=c++20 -O2
+  simple:
+    cputils-run a.cpp                # reads input from stdin (if a.cpp needs it)
+    cputils-run a.cpp -c             # reads input from clipboard
+    cputils-run a.cpp -f             # reads input from file `a.cpp.txt`
+    cputils-run a.cpp -f in          # reads input from file `in`
+    cputils-run a.cpp <  in          # reads input from stdin redirect (from file `in`)
+    cat in | cputils-run a.cpp       # reads input from stdin pipe     (from file `in`)
 
-    using alias functions:
-      .bashrc / .zshrc etc.:
+  with args to the compiler:
+    cputils-run a.cpp          -- -DDEBUG -std=c++98 -Wextra -Wpedantic
+    cputils-run a.cpp -f       -- -DDEBUG -std=c++11 -Wl,--stack,$((2 ** 28)) 
+    cputils-run a.cpp -f in    -- -DEVAL  -std=c++14 -O2
+	cputils-run a.cpp          --         -std=c++17 -O3 < in
+    cat in | cputils-run a.cpp --         -std=c++20 -O3
 
-      xd() { cputils-run -a "-DDEBUG" $* }
+  using alias functions:
 
-    simple (using aliases):
-      xd a.cpp               # reads input from clipboard
-      xd a.cpp -             # reads input from file "a.cpp.txt"
-      xd a.cpp - in          # reads input from file "in"
+  .bashrc / .zshrc / etc:
+  
+  ```sh
+  xd() { cputils-run -a "-DDEBUG" $* }
+  ...
 
-    with args to the compiler (using aliases):
-      xd a.cpp      --        -std=c++98 -Wextra
-      xd a.cpp -    --        -std=c++17 -Wextra -Wpedantic
-      xd a.cpp - in -- -DEVAL -std=c++20 -O2
+  and replace `cputils-run a.cpp`
+  with        `xd a.cpp`
 
 ```
 
@@ -177,7 +197,7 @@ xd() { cputils run -a "-DDEBUG" $* }
 xp() { cputils run -a "-DEVAL"  $* }
 ```
 
-- auto read input from clipboard with `cputils run`:
+- enable reading input from clipboard with `cputils run -c`:
 
 edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `paste_from_clipboard` function provide a way to paste input from your clipboard if it's not already handled:
 
@@ -187,12 +207,12 @@ edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `
 # ...
 
 paste_from_clipboard() {
-	if   command -v xclip   &>/dev/null; then printf "$(xclip -selection clipboard -o || xclip -selection primary -o)"
+	if   command -v xclip   &>/dev/null; then printf "$(xclip -selection clipboard -o)"
 	elif command -v pbpaste &>/dev/null; then printf "$(pbpaste)"
 	elif command -v xsel    &>/dev/null; then printf "$(xsel --clipboard)"
 	elif ls /dev/clipboard  &>/dev/null; then printf "$(cat /dev/clipboard)"
 	# add your's!
-	else exit 1
+	else return 1
 	fi
 }
 export -f paste_from_clipboard
@@ -211,7 +231,7 @@ edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `
 # ...
 
 open_with_editor() {
-	exit 1 # comment out this line and choose your editor if you want to
+	return 1 # comment out this line and choose your editor if you want to
 
 	# vim "$1"
 	# code "$1"
@@ -225,7 +245,7 @@ export -f open_with_editor
 
 - provide a source file hashing function to avoid recompilation if no changes occured
 
-edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `create_hash` function provide a way to hash the file `"$1"`:
+edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `create_hash` function provide a way to hash stdin `"$1"`:
 
 ```bash
 # cputils.config.bash
@@ -233,10 +253,10 @@ edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `
 # ...
 
 create_hash() {
-	exit 1 # comment out this line to enable and choose the appropriate method
+	return 1  # comment out this line to enable and choose the appropriate method
 	
-	# printf "$(sha256sum "$1" | awk '{ print $1 }')"
-	# printf "$(openssl dgst -sha256 -r "$1" | awk '{ print $1 }')"
+	# printf "$(printf "$1" | openssl dgst -sha256 -r | awk '{ print $1 }')"
+	# printf "$(printf "$1" | sha256sum - | awk '{ print $1 }')"
 }
 export -f create_hash
 
@@ -244,7 +264,7 @@ export -f create_hash
 
 ```
 
-> note - we handle other side effects ourselves (EXTRA_COMPILER_ARGS and (hopefully) anything else that should invalidate the cache). Create an issue if we missed something
+> note - we handle other side effects ourselves (`EXTRA_COMPILER_ARGS`, `CPP_COMPILER_DEFAULT_ARGS` and (hopefully) anything else that should invalidate the cache). Create an issue if we missed something
 
 - customize file templates for `cputils new`:
 
@@ -261,3 +281,12 @@ cputils new file.cpp -t TEMPLATE_ID
 ```
 
 you can even have templates for other languages too - just use a different file extension (like `template.py`, `template.js` etc.)
+
+- other configurations
+
+explore the config file `$HOME/.config/cputils/cputils.config.bash`. Some settings include:
+
+- `INPUT_CACHE_FILE_EXTENSION`
+- `HIDE_EXAMPLES`
+- `CPP_COMPILER_DEFAULT_ARGS`
+

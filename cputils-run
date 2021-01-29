@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 # the good stuff
 
-#
-# TODO:
-# we need to simplify the explanation (of "-a" vs "--")
-#
-# it's possible: use "-a" as the first example
-# and then mention that "--" is the same but must be used at least once
-# at the end of the execution chain)
-#
-
 CFGDIR="$HOME/.config/cputils"
+
 source "$CFGDIR/cputils.config.bash"
+
+[ -z "$CPP_COMPILER_DEFAULT_ARGS" ] && {
+	CPP_COMPILER_DEFAULT_ARGS="-std=c++17 -g -Wall"
+}
 
 #
 # the reason we switched from ".in" to ".txt"
@@ -28,21 +24,28 @@ source "$CFGDIR/cputils.config.bash"
 USAGE="\
 usage:
 
-cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EXTRA_COMPILER_ARGS]
+cputils-run FILENAME.cpp [OPTIONS]... [-- EXTRA_COMPILER_ARGS]
 
   where
     FILENAME.cpp                = source file you want to run
 
-    -                           = reuse previous input
-                                  instead of reading from clipboard
+    -f [INPUT_FILE]             = read input from (default) INPUT_FILE
+                                  instead of reading from stdin
 
-    INPUT_FILE                  = input file to take input from.
-                                  default: FILENAME.cpp.$INPUT_CACHE_FILE_EXTENSION
+    INPUT_FILE                  = specify your own INPUT_FILE instead of the default
+                                  default: FILENAME.cpp.$INPUT_CACHE_FILE_EXTENSION (configurable)
 
-    --fc, --force-recompile     = force recompilation no matter if the hash matches or not
+    -c                          = read input from clipboard
+
+    -r, --recompile             = force recompilation no matter if the file hash
+                                  matches previously compiled file's hash
                                   default: false
-                                  (does not matter if user has not provided a hashing function
-                                   in their config. See README for more info)
+
+                                  note: this does not matter if the user has not
+                                  provided a hashing function in their config.
+                                  see README for more info
+
+    -e, --edit                  = edit the INPUT_FILE with configured editor
     
     -a \"EXTRA_COMPILER_ARGS\"    = pass arguments to the compiler (quotes necessary),
                                   can be used multiple times.
@@ -53,43 +56,62 @@ cputils-run FILENAME.cpp [- [INPUT_FILE]] [-a \"EXTRA_COMPILER_ARGS\"]... [-- EX
                                   (see the examples below)
 
     -- EXTRA_COMPILER_ARGS      = same as \`-a\`, just for extra convenience
-                                  (no quotes needed, must be used at most once, since
-                                  \`--\` will stop argument parsing and will forward
-                                  everything to the compiler)
+                                  (no quotes needed, must be used at most once,
+                                  since \`--\` will stop argument parsing
+                                  and will forward everything to the compiler)
 
+    -h                          = see this
 
-  examples:
-    simple:
-      cputils-run a.cpp               # reads input from clipboard
-      cputils-run a.cpp -             # reads input from file \"a.cpp.$INPUT_CACHE_FILE_EXTENSION\"
-      cputils-run a.cpp - in          # reads input from file \"in\"
-
-    with args to the compiler:
-      cputils-run a.cpp      -- -DDEBUG -std=c++98 -Wextra
-      cputils-run a.cpp -    -- -DDEBUG -std=c++17 -Wextra -Wpedantic
-      cputils-run a.cpp - in -- -DEVAL  -std=c++20 -O2
-
-    using alias functions:
-      .bashrc / .zshrc etc.:
-
-      xd() { cputils-run -a \"-DDEBUG\" \$* }
-
-    simple (using aliases):
-      xd a.cpp               # reads input from clipboard
-      xd a.cpp -             # reads input from file \"a.cpp.$INPUT_CACHE_FILE_EXTENSION\"
-      xd a.cpp - in          # reads input from file \"in\"
-
-    with args to the compiler (using aliases):
-      xd a.cpp      --        -std=c++98 -Wextra
-      xd a.cpp -    --        -std=c++17 -Wextra -Wpedantic
-      xd a.cpp - in -- -DEVAL -std=c++20 -O2
+    --help                      = see this + examples (even if hidden via config)
 
 "
+
+EXAMPLES="\
+examples (hideable via config):
+
+  simple:
+    cputils-run a.cpp                # reads input from stdin (if a.cpp needs it)
+    cputils-run a.cpp -c             # reads input from clipboard
+    cputils-run a.cpp -f             # reads input from file \`a.cpp.$INPUT_CACHE_FILE_EXTENSION\`
+    cputils-run a.cpp -f in          # reads input from file \`in\`
+    cputils-run a.cpp <  in          # reads input from stdin redirect (from file \`in\`)
+    cat in | cputils-run a.cpp       # reads input from stdin pipe     (from file \`in\`)
+
+  with args to the compiler:
+    cputils-run a.cpp          -- -DDEBUG -std=c++98 -Wextra -Wpedantic
+    cputils-run a.cpp -f       -- -DDEBUG -std=c++11 -Wl,--stack,\$((2 ** 28)) 
+    cputils-run a.cpp -f in    -- -DEVAL  -std=c++14 -O2
+	cputils-run a.cpp          --         -std=c++17 -O3 < in
+    cat in | cputils-run a.cpp --         -std=c++20 -O3
+
+  using alias functions:
+
+  .bashrc / .zshrc / etc:
+  
+  \`\`\`sh
+  xd() { cputils-run -a \"-DDEBUG\" \$* }
+  ...
+
+  and replace \`cputils-run a.cpp\`
+  with        \`xd a.cpp\`
+
+
+"
+
+[ -z "$HIDE_EXAMPLES" ] && {
+	HIDE_EXAMPLES=0
+}
+
+if [ "$HIDE_EXAMPLES" -eq 1 ]; then
+	USAGE_FULL="$USAGE\n"
+else
+	USAGE_FULL="$USAGE\n$EXAMPLES"
+fi
 
 # parse arguments
 
 [ -z "$1" ] && {
-	printf "$USAGE"
+	printf "$USAGE_FULL"
 	exit 1
 }
 
@@ -102,47 +124,105 @@ EXTRA_FROM_ALIAS=""
 while (( $# )); do
 	case "$1" in
 		-)
+			# TODO: improve even further
+			# e.g. do not print BEGIN/END INPUT
+			# if the input is coming from the terminal
+			# see https://serverfault.com/a/156510/506302
+
+			WHICH_INPUT_USED="STDIN"
+			shift
+			;;
+
+		-f)
 			WHICH_INPUT_USED="FILE_CACHE"
 			shift
 			;;
-		--fc)
+
+		-c)
+			WHICH_INPUT_USED="CLIPBOARD"
+			shift
+			;;
+
+		-e|--edit)
+			EDIT_INPUT_FILE=1
+			shift
+			;;
+
+		-r|--force-recompile|--force-compile|--recompile|--compile)
 			FORCE_RECOMPILE=1
 			shift
 			;;
-		--force-recompile)
-			FORCE_RECOMPILE=1
+
+		-h)
 			shift
+			printf "$USAGE_FULL"
+			exit 0
 			;;
+
+		--help)
+			shift
+			printf "$USAGE\n$EXAMPLES"
+			exit 0
+			;;
+
 		-a)
 			shift
 			EXTRA_FROM_ALIAS="$EXTRA_FROM_ALIAS $1"
 			shift
 			;;
+
 		--)
 			shift
 			break
 			# stop parsing and forward rest of arguments
 			# to the compiler
 			;;
+
 		*)
 			if [ -z "$INPUT_FILE" ]; then
-				INPUT_FILE="$1"
+				if [ "$WHICH_INPUT_USED" = "FILE_CACHE" ]; then
+					WHICH_INPUT_USED="FILE_CUSTOM"
+					CUSTOM_INPUT_FILE="$1"
+					shift
 
-				[[ "$INPUT_FILE" =~ \.$INPUT_CACHE_FILE_EXTENSION$ ]] && {
-					# remove the configured extension suffix -
-					# likely a mistake by the user,
-					# since we're adding the suffix ourselves
+				else
+					INPUT_FILE="$1"
 
-					INPUT_FILE="$(trim_extension "$INPUT_FILE")"
-				}
+					[[ "$INPUT_FILE" =~ \.$INPUT_CACHE_FILE_EXTENSION$ ]] && {
+						# remove the configured extension suffix -
+						# likely a mistake by the user,
+						# since we're adding the suffix ourselves
 
-				shift
-			elif [ ! -z "$WHICH_INPUT_USED" ]; then
+						INPUT_FILE="$(trim_extension "$INPUT_FILE")"
+					}
+
+					shift
+
+					[ ! -f "$INPUT_FILE" ] && {
+					printf "\
+cputils-run error:
+
+input file ($INPUT_FILE) does not exist
+
+consult \`cputils-run -h\`
+
+"
+						exit 1
+					}
+				fi
+			
+			elif [ -n "$WHICH_INPUT_USED" ] && [ "$WHICH_INPUT_USED" = "FILE_CACHE" ]; then
 				WHICH_INPUT_USED="FILE_CUSTOM"
 				CUSTOM_INPUT_FILE="$1"
 				shift
+
 			else
+				printf "\nerror: unrecognized option: $1\n\n"
+
 				printf "$USAGE"
+
+				printf "\nerror: unrecognized option: $1\n\n"
+
 				shift
 				exit 1
 			fi
@@ -150,8 +230,43 @@ while (( $# )); do
 	esac
 done
 
-[ -z "$WHICH_INPUT_USED" ] && WHICH_INPUT_USED="CLIPBOARD"
+if [ -z "$INPUT_FILE" ]; then
+	# if user provided \`- INPUT_FILE\`, we parsed it as
+	# \`- CUSTOM_INPUT_FILE\` (not the source file, but the data file),
+	# thus reverse it
+	# (though without extra sugar of removing the extra
+	# $INPUT_CACHE_FILE_EXTENSION to make it very obvious
+	# for the user if they made a mistake)
+	#
+	# otherwise - INPUT_FILE was not provided in any way
+	# 
+	if [ -n "$CUSTOM_INPUT_FILE" ]; then
+		INPUT_FILE="$CUSTOM_INPUT_FILE"
+		unset CUSTOM_INPUT_FILE
+		WHICH_INPUT_USED="FILE_CACHE"
+	else
+
+		printf "\
+cputils-run error:
+
+source file not provided
+
+"
+		exit 1
+	fi
+fi
+
+[ -z "$WHICH_INPUT_USED" ] && {
+	# disabled this because it would always read from stdin
+	# if input was unset instead of the clipboard,
+	# and it does not work the way you'd expect
+	# [ -z "$STDIN" ] && WHICH_INPUT_USED="CLIPBOARD" || WHICH_INPUT_USED="STDIN"
+
+	# WHICH_INPUT_USED="CLIPBOARD"
+	WHICH_INPUT_USED="STDIN"
+}
 [ -z "$FORCE_RECOMPILE" ] && FORCE_RECOMPILE=0
+[ -z "$EDIT_INPUT_FILE" ] && EDIT_INPUT_FILE=0
 
 # echo "INPUT_FILE $INPUT_FILE; WHICH_INPUT_USED $WHICH_INPUT_USED; CUSTOM_INPUT_FILE $CUSTOM_INPUT_FILE;"
 
@@ -179,11 +294,72 @@ INPUT_FILE_FILENAME_EXTLESS="$(trim_extension "$INPUT_FILE_FILENAME")"
 OUTPUT_FILE="$INPUT_FILE_PATH/$INPUT_FILE_FILENAME.out"
 
 INPUT_CACHE_FILE="$INPUT_FILE.$INPUT_CACHE_FILE_EXTENSION"
-touch "$INPUT_CACHE_FILE"
+
+[ "$WHICH_INPUT_USED" = "FILE_CACHE" ] && {
+	touch "$INPUT_CACHE_FILE"
+}
+
+[ "$WHICH_INPUT_USED" = "FILE_CUSTOM" ] && {
+	touch "$CUSTOM_INPUT_FILE"
+}
+
+# handle input cache file editing instead of running
+if [ "$EDIT_INPUT_FILE" -eq 1 ]; then
+	if [ "$WHICH_INPUT_USED" = "FILE_CUSTOM" ]; then
+		open_with_editor "$CUSTOM_INPUT_FILE"
+		exit $?
+
+	elif [ "$WHICH_INPUT_USED" = "FILE_CACHE" ]; then
+		open_with_editor "$INPUT_CACHE_FILE"
+		exit $?
+
+	elif [ "$WHICH_INPUT_USED" = "CLIPBOARD" ]; then
+		if [ -f "$INPUT_CACHE_FILE" ]; then
+			open_with_editor "$INPUT_CACHE_FILE"
+			exit $?
+		else
+
+			# decided to open the file here too
+			# in case the user intentionally wants to
+			# first edit the input file
+			# and only later the source file
+
+			open_with_editor "$INPUT_CACHE_FILE"
+			exit $?
+
+#			printf "\
+#cputils-run error:
+#
+#cannot edit input file since it's not created yet.
+#
+#"
+#			exit 1
+			
+		fi
+
+	else
+		printf "\
+cputils-run error:
+
+cannot edit input file since it's not selected.
+
+use \`-\`            to select the default input file ($INPUT_CACHE_FILE)
+or  \`- INPUT_FILE\` to select          a custom file \`INPUT_FILE\`
+
+"
+
+		exit 1
+	fi
+fi
 
 # determine INPUT and INPUT_INFO
 
-if [ "$WHICH_INPUT_USED" = "CLIPBOARD" ]; then
+if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
+	INPUT_INFO="STDIN"
+	#STDIN="$(cat -)"
+	#INPUT="$STDIN"
+
+elif [ "$WHICH_INPUT_USED" = "CLIPBOARD" ]; then
 	INPUT_INFO="CLIPBOARD"
 	INPUT="$(paste_from_clipboard)"
 	CLIPBOARD_RETURN_STATUS=$?
@@ -216,7 +392,7 @@ You got it!
 
 elif [ "$WHICH_INPUT_USED" = "FILE_CACHE" ]; then
 	INPUT_INFO="FILE ($INPUT_CACHE_FILE)"
-	INPUT="$(cat $INPUT_CACHE_FILE)"
+	INPUT="$(cat "$INPUT_CACHE_FILE")"
 
 elif [ "$WHICH_INPUT_USED" = "FILE_CUSTOM" ]; then
 	INPUT_INFO="FILE ($CUSTOM_INPUT_FILE)"
@@ -254,7 +430,12 @@ fi
 # 
 # the separator '@' is picked arbitrarily; it's only important that it's there
 #
-NEW_HASH="$NEW_SOURCE_FILE_HASH @ -a \"$EXTRA_FROM_ALIAS\" @ \$* \"$*\""
+NEW_HASH="\
+NEW_SOURCE_FILE_HASH \"$NEW_SOURCE_FILE_HASH\"
+CPP_COMPILER_DEFAULT_ARGS \"$CPP_COMPILER_DEFAULT_ARGS\"
+EXTRA_FROM_ALIAS \"$EXTRA_FROM_ALIAS\"
+\$* \"$*\"\
+"
 
 #
 # the user by default will have the 'create_hash' function disabled,
@@ -271,18 +452,50 @@ else
 	SAFE_TO_SKIP_COMPILATION=0
 fi
 
-# run based on time cmd (best if GNU /usr/bin/time is available)
-if command -v time &>/dev/null; then
-	runner() {
-		TIME_CMD="/usr/bin/env time"
-		TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss\n"
+# TODO FIXME: BROKEN
+#### determine if we'll pipe input
+#### or if we'll leave it up for the executable
+#### to figure out itself
+###if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
+###	CONDITIONAL_INPUT_PIPER=""
+###else
+###	# careful here lmao, test thoroughly
+###	CONDITIONAL_INPUT_PIPER="printf "$INPUT" |"
+###fi
 
-		printf "$INPUT\n" | ($TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE")
-	}
-else
+# run based on time cmd (best if GNU /usr/bin/time is available)
+if command -v /usr/bin/time &>/dev/null; then
+	TIME_CMD="/usr/bin/env time"
+	TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss"
+
 	runner() {
-		printf "$INPUT\n" | (time                       "$OUTPUT_FILE")
+		### $CONDITIONAL_INPUT_PIPER $TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE"
+
+		if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
+			$TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE"
+		else
+			printf "$INPUT" | $TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE"
+		fi
 	}
+
+else
+	TIME_CMD="time"
+	TIME_CMD_ARGS=""
+
+	# TODO FIXME: BROKEN
+	### automatically ~~taken~~ NOT taken by bash (wut)
+	### TIMEFORMAT=$'\nreal\t%3lR\nuser\t%3lU\nsys\t%3lS\n'
+
+	runner() {
+		### $CONDITIONAL_INPUT_PIPER $TIME_CMD  $TIME_CMD_ARGS  "$OUTPUT_FILE"
+
+		if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
+			$TIME_CMD  $TIME_CMD_ARGS  "$OUTPUT_FILE"
+		else
+			printf "$INPUT" | $TIME_CMD  $TIME_CMD_ARGS  "$OUTPUT_FILE"
+		fi
+	}
+
 fi
 
 # go go go
@@ -294,17 +507,23 @@ printf "$INPUT_INFO\n\n"
 if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
 	runner
 
-	printf "NO_RECOMPILE\n"
+	printf "\nNO_RECOMPILE"
 else
 	# do NOT quote $EXTRA_FROM_ALIAS nor $*
 	# because this allows them to expand
 	# and act as multiple different arguments
 	# as opposed to a single one
-
-	g++ -std=c++17 -g -Wall -o "$OUTPUT_FILE" "$INPUT_FILE"  $EXTRA_FROM_ALIAS  $*  && \
+	
+	g++ -o "$OUTPUT_FILE" "$INPUT_FILE"  $CPP_COMPILER_DEFAULT_ARGS  $EXTRA_FROM_ALIAS  $*  && \
 	if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi && \
 	runner
+
+	if [ "$FORCE_RECOMPILE" -eq 1 ]; then
+		printf "\nRECOMPILE"
+	else
+		printf "\nCOMPILE"
+	fi
 fi
 
-printf "\n"
+printf "\n\n"
 

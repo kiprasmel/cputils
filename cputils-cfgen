@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 # cfgen - codeforces contest boilerplate generator
 
-USAGE="usage: cfgen CONTEST_NUM\n\n"
+USAGE="\
+usage:
+
+cfgen CONTEST_NUM [OPTIONS_FOR_CPUTILS_NEW...]
+
+where
+  OPTIONS_FOR_CPUTILS_NEW     = options to forward to \`cputils-new\`
+                                by default, adds \`-y\` for non-interactive
+
+								See \`cputils-new -h\`
+
+"
 
 DIRNAME="$(dirname "$0")"
 CONTEST_NUM="$1"
@@ -18,5 +29,10 @@ mkdir -p "$DIR"
 
 FILE_NAMES=('a' 'b' 'c' 'd' 'e' 'f' 'g' 'h')
 for i in "${FILE_NAMES[@]}"; do
-	/usr/bin/env bash "$DIRNAME/m" "./$DIR/$i.cpp" $*
+	>&2 /usr/bin/env bash "$DIRNAME/cputils-new" -y "./$DIR/$i.cpp" $*
 done
+
+>&2 printf "\n\n    "
+printf "cd $DIR"
+>&2 printf "\n\n"
+

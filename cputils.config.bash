@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # cputils.config.bash
 
-#
+export INPUT_CACHE_FILE_EXTENSION="txt"
+export HIDE_EXAMPLES=0
+export CPP_COMPILER_DEFAULT_ARGS="-std=c++17 -g -Wall"
+
 # we attempt to handle at least the most common clipboard tools here.
 # add yours if it's missing
 # (see https://stackoverflow.com/questions/749544/pipe-to-from-the-clipboard-in-bash-script
@@ -31,21 +34,17 @@ open_with_editor() {
 }
 export -f open_with_editor
 
-#
-# create a hash of a source file,
+# create a hash of a source file (from stdin)
 # so that it will not be recompiled
 # if nothing has changed
 #
 create_hash() {
-	return 1 # comment out this line to enable and choose the appropriate method
+	return 1  # comment out this line to enable and choose the appropriate method
 	
-	# printf "$(sha256sum "$1" | awk '{ print $1 }')"
-	# printf "$(openssl dgst -sha256 -r "$1" | awk '{ print $1 }')"
+	# printf "$(printf "$1" | openssl dgst -sha256 -r | awk '{ print $1 }')"
+	# printf "$(printf "$1" | sha256sum - | awk '{ print $1 }')"
 
 	# note: might be different for Mac, see https://stackoverflow.com/a/20217018/9285308
 }
 export -f create_hash
-
-INPUT_CACHE_FILE_EXTENSION="txt"
-export $INPUT_CACHE_FILE_EXTENSION
 
