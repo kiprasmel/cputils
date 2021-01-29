@@ -1,9 +1,21 @@
 #!/usr/bin/env bash
 # cputils.config.bash
 
-export INPUT_CACHE_FILE_EXTENSION="txt"
-export HIDE_EXAMPLES=0
 export CPP_COMPILER_DEFAULT_ARGS="-std=c++17 -g -Wall"
+export INPUT_CACHE_FILE_EXTENSION="cpp.txt"
+export HIDE_EXAMPLES=0
+
+create_output_file_name() {
+	FILENAME_EXTLESS="$1"
+	EXT="$2"
+
+	# printf "a"
+	# printf "a.out"
+	printf "$FILENAME_EXTLESS"
+	# printf "$FILENAME_EXTLESS.out"
+	# printf "$FILENAME_EXTLESS.$EXT.out"
+}
+export -f create_output_file_name
 
 # we attempt to handle at least the most common clipboard tools here.
 # add yours if it's missing

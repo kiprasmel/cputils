@@ -9,17 +9,9 @@ source "$CFGDIR/cputils.config.bash"
 	CPP_COMPILER_DEFAULT_ARGS="-std=c++17 -g -Wall"
 }
 
-#
-# the reason we switched from ".in" to ".txt"
-# is because the editor(e.g. neovim + coc-clangd)
-# would recognize the filetype of ".cpp.in" to be "cpp"
-# and thus the linter & other annyoing stuff would jump in
-# even though the file was just a regular input file,
-# thus we've switched to just regular ".txt"
-#
-# still configurable tho:D
-#
-[ -z "$INPUT_CACHE_FILE_EXTENSION" ] && INPUT_CACHE_FILE_EXTENSION="txt"
+[ -z "$INPUT_CACHE_FILE_EXTENSION" ] && {
+	INPUT_CACHE_FILE_EXTENSION="cpp.txt"
+}
 
 USAGE="\
 usage:
@@ -33,7 +25,7 @@ cputils-run FILENAME.cpp [OPTIONS]... [-- EXTRA_COMPILER_ARGS]
                                   instead of reading from stdin
 
     INPUT_FILE                  = specify your own INPUT_FILE instead of the default
-                                  default: FILENAME.cpp.$INPUT_CACHE_FILE_EXTENSION (configurable)
+                                  default: FILENAME.$INPUT_CACHE_FILE_EXTENSION (configurable)
 
     -c                          = read input from clipboard
 
@@ -72,7 +64,7 @@ examples (hideable via config):
   simple:
     cputils-run a.cpp                # reads input from stdin (if a.cpp needs it)
     cputils-run a.cpp -c             # reads input from clipboard
-    cputils-run a.cpp -f             # reads input from file \`a.cpp.$INPUT_CACHE_FILE_EXTENSION\`
+    cputils-run a.cpp -f             # reads input from file \`a.$INPUT_CACHE_FILE_EXTENSION\`
     cputils-run a.cpp -f in          # reads input from file \`in\`
     cputils-run a.cpp <  in          # reads input from stdin redirect (from file \`in\`)
     cat in | cputils-run a.cpp       # reads input from stdin pipe     (from file \`in\`)
@@ -117,6 +109,10 @@ fi
 
 trim_extension() {
 	printf "${1%.*}"
+}
+
+get_extension() {
+	printf "${1##*.}"
 }
 
 EXTRA_FROM_ALIAS=""
@@ -282,6 +278,7 @@ fi
 INPUT_FILE_PATH="$(dirname "$INPUT_FILE")"
 INPUT_FILE_FILENAME="$(basename "$INPUT_FILE")"
 INPUT_FILE_FILENAME_EXTLESS="$(trim_extension "$INPUT_FILE_FILENAME")"
+INPUT_FILE_EXT="$(get_extension "$INPUT_FILE_FILENAME")"
 
 #
 # We've decided to output the file WITH the ".cpp" extension
@@ -291,7 +288,7 @@ INPUT_FILE_FILENAME_EXTLESS="$(trim_extension "$INPUT_FILE_FILENAME")"
 # Might make configurable
 #
 ### OUTPUT_FILE="$INPUT_FILE_PATH/$INPUT_FILE_FILENAME_EXTLESS.out"
-OUTPUT_FILE="$INPUT_FILE_PATH/$INPUT_FILE_FILENAME.out"
+OUTPUT_FILE="$INPUT_FILE_PATH/$(create_output_file_name "$INPUT_FILE_FILENAME_EXTLESS" "$INPUT_FILE_EXT")"
 
 INPUT_CACHE_FILE="$INPUT_FILE.$INPUT_CACHE_FILE_EXTENSION"
 
