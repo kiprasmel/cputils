@@ -245,7 +245,7 @@ export -f open_with_editor
 
 - provide a source file hashing function to avoid recompilation if no changes occured
 
-edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `create_hash` function provide a way to hash stdin `"$1"`:
+edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `create_hash` function provide a way to hash file `"$1"`:
 
 ```bash
 # cputils.config.bash
@@ -255,8 +255,8 @@ edit the config file `$HOME/.config/cputils/cputils.config.bash` -- inside the `
 create_hash() {
 	return 1  # comment out this line to enable and choose the appropriate method
 	
-	# printf "$(printf "$1" | openssl dgst -sha256 -r | awk '{ print $1 }')"
-	# printf "$(printf "$1" | sha256sum - | awk '{ print $1 }')"
+	# openssl dgst -sha256 -r "$1" | awk '{ print $1 }'
+	# sha256sum "$1" | awk '{ print $1 }'
 }
 export -f create_hash
 
