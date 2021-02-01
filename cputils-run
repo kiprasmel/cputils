@@ -13,6 +13,8 @@ source "$CFGDIR/cputils.config.bash"
 	INPUT_CACHE_FILE_EXTENSION="cpp.txt"
 }
 
+REPO_URL="https://github.com/kiprasmel/cputils"
+
 USAGE="\
 usage:
 
@@ -361,25 +363,55 @@ elif [ "$WHICH_INPUT_USED" = "CLIPBOARD" ]; then
 	INPUT="$(paste_from_clipboard)"
 	CLIPBOARD_RETURN_STATUS=$?
 
-	if [ -z "$INPUT" ]; then
-		if [ $CLIPBOARD_RETURN_STATUS -eq 1 ]; then
-			printf "
-cputils-run error! we couldn't read input from your clipboard.
-
+	CLIPBOARD_INFO="\
 Either:
-  a) use an input file (via \`cputils-run -\` or \`cputils-run - input_file\`, or
-  b) go to the config file \`$CFGDIR/cputils.config.bash\`
+  a) use an input file, or
+  b) pipe / forward from stdin, or
+  c) go to the config file \`$CFGDIR/cputils.config.bash\`
      and provide a way to paste from your clipboard
      in the \`paste_from_clipboard\` function.
+"
 
-You got it!
+	if [ -z "$INPUT" ]; then
+
+		if [ "$CLIPBOARD_RETURN_STATUS" -eq 0 ]; then
+			: # pass
+
+		elif [ $CLIPBOARD_RETURN_STATUS -eq 1 ] || [ $CLIPBOARD_RETURN_STATUS -eq $STATUS_CLIPBOARD_FAILURE ]; then
+			>&2 printf "\
+cputils-run error: we couldn't read input from your clipboard.
+
+$CLIPBOARD_INFO
 
 "
-		exit 1
+			exit 1
 
-		# else, clipboard is empty -- that's fine
-		fi
-	fi
+		elif [ $CLIPBOARD_RETURN_STATUS -eq $STATUS_CLIPBOARD_UNHANDLED ]; then
+			>&2 printf "\
+cputils-run error: your clipboard is not supported
+
+$CLIPBOARD_INFO
+
+"
+			exit 1
+
+		else
+			>&2 printf "\
+cputils-run error: unknown return status from clipboard ($CLIPBOARD_RETURN_STATUS)
+
+$CLIPBOARD_INFO
+
+---
+
+validate your config is working correctly,
+and if this still breaks - create an issue:
+
+$REPO_URL
+
+"
+
+		fi # clipboard set up correctly
+	fi # input not empty
 
 	# prepend the input from clipboard into the cache file
 	mv "$INPUT_CACHE_FILE" "$INPUT_CACHE_FILE.bp"
@@ -400,7 +432,7 @@ else
 cputils-run error: parsing arguments went wrong ¯\\_(:c)_/¯
 
 create an issue here:
-https://github.com/kiprasmel/cputils
+$REPO_URL
 
 "
 	exit 1

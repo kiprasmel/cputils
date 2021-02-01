@@ -25,13 +25,23 @@ export -f create_output_file_name
 # it'd be great if you could create a pull request too!
 # https://github.com/kiprasmel/cputils/blob/master/cputils-run
 #
+
+export STATUS_CLIPBOARD_FAILURE=2   # likely to be empty, thought not all tools error in this case :/
+export STATUS_CLIPBOARD_UNHANDLED=3
+
 paste_from_clipboard() {
-	if   command -v xclip   &>/dev/null; then printf "$(xclip -selection clipboard -o || xclip -selection primary -o)"
-	elif command -v pbpaste &>/dev/null; then printf "$(pbpaste)"
-	elif command -v xsel    &>/dev/null; then printf "$(xsel --clipboard)"
-	elif ls /dev/clipboard  &>/dev/null; then printf "$(cat /dev/clipboard)"
-	else return 1
+	  if command -v xclip   &>/dev/null; then
+		                xclip -selection clipboard -o 2>/dev/null && return 0 \
+		             || xclip -selection primary   -o 2>/dev/null && return 0 \
+		             ||                                              return $STATUS_CLIPBOARD_FAILURE
+	elif command -v xsel    &>/dev/null; then xsel --clipboard    || return $STATUS_CLIPBOARD_FAILURE
+	elif command -v pbpaste &>/dev/null; then pbpaste             || return $STATUS_CLIPBOARD_FAILURE
+	elif ls /dev/clipboard  &>/dev/null; then cat /dev/clipboard  || return $STATUS_CLIPBOARD_FAILURE
+	# elif ... # add your's!
+	else return $STATUS_CLIPBOARD_UNHANDLED
 	fi
+
+	return $?
 }
 export -f paste_from_clipboard
 
