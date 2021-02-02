@@ -39,7 +39,7 @@ setup() {
   # https://stackoverflow.com/a/24112741/9285308
   export REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd -P)"
 
-  unset "$PATH"
+  PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
 
   # add cputils scripts to path
   # (thus no need to re-compile / re-install before running tests)
