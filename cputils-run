@@ -195,18 +195,6 @@ while (( $# )); do
 					}
 
 					shift
-
-					[ ! -f "$INPUT_FILE" ] && {
-					printf "\
-cputils-run error:
-
-input file ($INPUT_FILE) does not exist
-
-consult \`cputils-run -h\`
-
-"
-						exit 1
-					}
 				fi
 			
 			elif [ -n "$WHICH_INPUT_USED" ] && [ "$WHICH_INPUT_USED" = "FILE_CACHE" ]; then
@@ -253,6 +241,18 @@ source file not provided
 		exit 1
 	fi
 fi
+
+[ ! -f "$INPUT_FILE" ] && {
+	printf "\
+cputils-run error:
+
+input source file ($INPUT_FILE) does not exist
+
+consult \`cputils-run -h\`
+
+"
+	exit 1
+}
 
 [ -z "$WHICH_INPUT_USED" ] && {
 	# disabled this because it would always read from stdin
@@ -440,6 +440,12 @@ INPUT_HASH_FILE="$INPUT_FILE_FILENAME.hash"
 NEW_SOURCE_FILE_HASH="$(create_hash "$INPUT_FILE")"
 CREATE_HASH_RETURN_STATUS=$?
 
+if [ ! -f "$OUTPUT_FILE" ] && [ ! -f "$INPUT_HASH_FILE" ]; then
+	FIRST_TIME_COMPILE=1
+else
+	FIRST_TIME_COMPILE=0
+fi
+
 if [ "$CREATE_HASH_RETURN_STATUS" -ne 0 ]; then
 	HASHING_ENABLED=0
 else
@@ -471,7 +477,7 @@ EXTRA_FROM_ALIAS \"$EXTRA_FROM_ALIAS\"
 # for it to be empty (always happens at the very first run)
 # 
 #
-if [ "$OLD_HASH" = "$NEW_HASH" ] && [ "$HASHING_ENABLED" -eq 1 ] && [ "$FORCE_RECOMPILE" -ne 1 ]; then
+if [ "$OLD_HASH" = "$NEW_HASH" ] && [ "$HASHING_ENABLED" -eq 1 ] && [ "$FORCE_RECOMPILE" -ne 1 ] && [ -f "$OUTPUT_FILE" ]; then
 	SAFE_TO_SKIP_COMPILATION=1
 else
 	SAFE_TO_SKIP_COMPILATION=0
@@ -528,7 +534,6 @@ fi
 printf "BEGIN INPUT\n$INPUT\nEND INPUT\n"
 printf "$INPUT_INFO\n\n"
 
-
 if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
 	runner
 
@@ -538,15 +543,19 @@ else
 	# because this allows them to expand
 	# and act as multiple different arguments
 	# as opposed to a single one
-	
+
 	g++ -o "$OUTPUT_FILE" "$INPUT_FILE"  $CPP_COMPILER_DEFAULT_ARGS  $EXTRA_FROM_ALIAS  $*  && \
 	if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi && \
 	runner
 
 	if [ "$FORCE_RECOMPILE" -eq 1 ]; then
-		printf "\nRECOMPILE"
+		printf "\nFORCE_RECOMPILE"
 	else
-		printf "\nCOMPILE"
+		if [ "$FIRST_TIME_COMPILE" -eq 1 ]; then
+			printf "\nCOMPILE"
+		else
+			printf "\nRECOMPILE"
+		fi
 	fi
 fi
 

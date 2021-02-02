@@ -55,7 +55,6 @@ setup() {
   unset xdg_var
 
   create_default_config() {
-    echo "REPO_ROOT $REPO_ROOT; CFGFILENAME $CFGFILENAME; CFGFILEPATH $CFGFILEPATH"
     cp "$REPO_ROOT/$CFGFILENAME" "$CFGFILEPATH"
   }
   # export create_default_config
@@ -90,15 +89,15 @@ create_template() {
 	CONTENT="$2"
 
 	[ -z "$CONTENT" ] && {
-		CONTENT='
+		CONTENT="
 #include <cstdio>
 
 int main() {
-	printf("hello world!\n");
+	printf(\"hello world!\");
 	return 0;
 }
 
-'
+"
 	}
 
 	
@@ -107,8 +106,12 @@ int main() {
 }
 
 create_template_with_input() {
-	create_template "$1" '
+	FULL_FILENAME="$1"
 
+	[ -n "$FULL_FILENAME" ]
+
+	create_template "$FULL_FILENAME" \
+"
 #include <iostream>
 #include <string>
 
@@ -121,8 +124,7 @@ int main() {
 	return 0;
 }
 
-'
-
+"
 }
 
 create_file() {
@@ -154,5 +156,26 @@ assert_any_line() {
     if [ "$line" = "$1" ]; then return 0; fi
   done
   return 1
+}
+
+with_hash() {
+	HASH="$1"
+
+	[ -n "$HASH" ]
+
+	override_config \
+"
+create_hash() {
+	printf \"$HASH\"
+	return 0
+}
+export -f create_hash
+
+create_output_file_name() {
+	printf \"\$1.out\"
+}
+export -f create_output_file_name
+"
+
 }
 
