@@ -5,6 +5,8 @@
 
 ## Installation
 
+[![](https://github.com/kiprasmel/cputils/workflows/full-setup/badge.svg)](https://github.com/kiprasmel/cputils/actions?query=workflow:full-setup+branch:master)
+
 ```sh
 git clone https://github.com/kiprasmel/cputils.git
 # or:  git clone git@github.com:kiprasmel/cputils.git
@@ -67,6 +69,8 @@ see individual commands for details
 
 ```
 
+[![](https://github.com/kiprasmel/cputils/workflows/cputils-new/badge.svg)](https://github.com/kiprasmel/cputils/actions?query=workflow:cputils-new+branch:master)
+
 ```sh
 $ cputils new
 
@@ -108,6 +112,8 @@ cputils-new NEW_FILENAME.EXTENSION [OPTIONS]
     cputils-new d.js                # create file d.js  from default template.js
 
 ```
+
+[![](https://github.com/kiprasmel/cputils/workflows/cputils-run/badge.svg)](https://github.com/kiprasmel/cputils/actions?query=workflow:cputils-run+branch:master)
 
 ```sh
 $ cputils run
@@ -289,4 +295,3 @@ explore the config file `$HOME/.config/cputils/cputils.config.bash`. Some settin
 - `INPUT_CACHE_FILE_EXTENSION`
 - `HIDE_EXAMPLES`
 - `CPP_COMPILER_DEFAULT_ARGS`
-
