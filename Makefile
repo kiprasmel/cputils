@@ -9,5 +9,5 @@ setup-dev:
 	./setup-dev.sh
 
 test:
-	./test.sh
+	./test.sh --all
 
