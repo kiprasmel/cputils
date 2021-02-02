@@ -11,7 +11,7 @@ git clone https://github.com/kiprasmel/cputils.git
 
 cd cputils
 
-make install
+make
 ```
 
 <details>

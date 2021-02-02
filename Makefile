@@ -1,4 +1,6 @@
-.PHONY: setup-dev test install all
+.PHONY: all setup-dev test install
+
+all: setup-dev test install
 
 install:
 	./install.sh
@@ -8,6 +10,4 @@ setup-dev:
 
 test:
 	./test.sh
-
-all: setup-dev test install
 
