@@ -294,47 +294,22 @@ OUTPUT_FILE="$INPUT_FILE_PATH/$(create_output_file_name "$INPUT_FILE_FILENAME_EX
 
 INPUT_CACHE_FILE="$INPUT_FILE_FILENAME_EXTLESS.$INPUT_CACHE_FILE_EXTENSION"
 
-[ "$WHICH_INPUT_USED" = "FILE_CACHE" ] && {
-	touch "$INPUT_CACHE_FILE"
-}
-
-[ "$WHICH_INPUT_USED" = "FILE_CUSTOM" ] && {
-	touch "$CUSTOM_INPUT_FILE"
-}
-
 # handle input cache file editing instead of running
 if [ "$EDIT_INPUT_FILE" -eq 1 ]; then
 	if [ "$WHICH_INPUT_USED" = "FILE_CUSTOM" ]; then
+		touch "$CUSTOM_INPUT_FILE"
 		open_with_editor "$CUSTOM_INPUT_FILE"
 		exit $?
 
 	elif [ "$WHICH_INPUT_USED" = "FILE_CACHE" ]; then
+		touch "$INPUT_CACHE_FILE"
 		open_with_editor "$INPUT_CACHE_FILE"
 		exit $?
 
 	elif [ "$WHICH_INPUT_USED" = "CLIPBOARD" ]; then
-		if [ -f "$INPUT_CACHE_FILE" ]; then
-			open_with_editor "$INPUT_CACHE_FILE"
-			exit $?
-		else
-
-			# decided to open the file here too
-			# in case the user intentionally wants to
-			# first edit the input file
-			# and only later the source file
-
-			open_with_editor "$INPUT_CACHE_FILE"
-			exit $?
-
-#			printf "\
-#cputils-run error:
-#
-#cannot edit input file since it's not created yet.
-#
-#"
-#			exit 1
-			
-		fi
+		touch "$INPUT_CACHE_FILE"
+		open_with_editor "$INPUT_CACHE_FILE"
+		exit $?
 
 	else
 		printf "\
@@ -346,10 +321,31 @@ use \`-\`            to select the default input file ($INPUT_CACHE_FILE)
 or  \`- INPUT_FILE\` to select          a custom file \`INPUT_FILE\`
 
 "
-
 		exit 1
 	fi
+
+	exit 1
 fi
+
+# make sure the file either already exists,
+# or we create it if it's expected.
+# otherwise error.
+[ "$WHICH_INPUT_USED" = "FILE_CACHE" ] && {
+	touch "$INPUT_CACHE_FILE"
+}
+
+[ "$WHICH_INPUT_USED" = "FILE_CUSTOM" ] && {
+	! [ -f "$CUSTOM_INPUT_FILE" ] && {
+		>&2 printf "\
+cputils-run error:
+
+custom input file ($CUSTOM_INPUT_FILE) does not exit.
+
+"
+
+		exit 1
+	}
+}
 
 # determine INPUT and INPUT_INFO
 

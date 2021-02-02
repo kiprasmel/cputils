@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 CFGDIR="$HOME/.config/cputils"
+CFGFILE="$CFGDIR/cputils.config.bash"
 
 USAGE="\
 usage:
@@ -95,6 +96,19 @@ done
 
 [ -z "$NON_INTERACTIVE" ] && NON_INTERACTIVE=0
 
+[ ! -f "$CFGFILE" ] && {
+	>&2 printf "\
+cputils-new error:
+
+config file is missing! should be placed in
+
+$CFGFILE
+
+"
+
+	exit 1
+}
+
 FILENAME="${FULL_FILENAME%.*}"
 EXTENSION="${FULL_FILENAME##*.}"
 
@@ -122,19 +136,32 @@ consult \`cputils-new -h\`
 
 cp -i -v "$TEMPLATE" "$FULL_FILENAME"
 
-[ "$NON_INTERACTIVE" -eq 0 ] && {
-	source "$CFGDIR/cputils.config.bash"
-	open_with_editor "$FULL_FILENAME"
-	OPEN_WITH_EDITOR_RETURN_STATUS=$?
+[ "$NON_INTERACTIVE" -eq 1 ] && exit 0
 
-	[ "$OPEN_WITH_EDITOR_RETURN_STATUS" -ne 0 ] && {
-		printf "
+source "$CFGDIR/cputils.config.bash"
+
+! declare -F open_with_editor &>/dev/null && {
+	>&2 printf "\
+cputils-error:
+
+function \`open_with_editor\` was not defined. verify your config.
+
+"
+
+	exit 1
+}
+
+open_with_editor "$FULL_FILENAME"
+OPEN_WITH_EDITOR_RETURN_STATUS=$?
+
+[ "$OPEN_WITH_EDITOR_RETURN_STATUS" -ne 0 ] && {
+	printf "
 cputils-new: warning
 
 open_with_editor (function from config) exited with non-zero code ($OPEN_WITH_EDITOR_RETURN_STATUS)
 
 "
-
-	}
 }
+
+exit $OPEN_WITH_EDITOR_RETURN_STATUS
 
