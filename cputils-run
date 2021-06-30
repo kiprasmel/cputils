@@ -82,7 +82,7 @@ examples (hideable via config):
 
   .bashrc / .zshrc / etc:
   
-  \`\`\`sh
+  ...sh
   xd() { cputils-run -a \"-DDEBUG\" \$* }
   ...
 
