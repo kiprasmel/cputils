@@ -19,10 +19,11 @@ make
 <details>
 
 <summary>
-Dependencies
+Runtime dependencies
 </summary>
 
 - g++ (soon the compiler will be configurable -- choose yours)
+- xargs
 - (optional) `xclip` / `pbpaste` / `xsel` / `/dev/clipboard` or any other tool to paste from clipboard
 - (optional) GNU time (`/usr/bin/env time`) for printing not only time, but also memory usage
  

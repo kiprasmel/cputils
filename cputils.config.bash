@@ -56,6 +56,25 @@ open_with_editor() {
 }
 export -f open_with_editor
 
+# internal function for 'create_hash'
+# https://stackoverflow.com/a/2394040/9285308
+strip_whitespace_and_comments() {
+	get_extension() {
+		printf "${1##*.}"
+	}
+
+	FILE="$1"
+	FILE_EXT="$(get_extension "$FILE")"
+
+	if [ "$FILE_EXT" = "cpp" ] || [ "$FILE_EXT" = "c" ]; then
+		# strip comments and whitespace
+		g++ -fpreprocessed -dD -E -P "$FILE"
+	else
+		# do nothing
+		cat "$FILE"
+	fi
+}
+
 # create a hash from stdin / $1.
 # used to check if a source file
 # should be recompiled or not
@@ -65,13 +84,13 @@ create_hash() {
 	if [ -z "$1" ]; then
 		# stdin
 
-		openssl dgst -sha256 -r      | awk '{ print $1 }'
-		# sha256sum - | awk '{ print $1 }'
+		  xargs strip_whitespace_and_comments      | openssl dgst -sha256 -r      | awk '{ print $1 }'
+		# xargs strip_whitespace_and_comments      | sha256sum -                  | awk '{ print $1 }'
 	else
 		# $1
 
-		openssl dgst -sha256 -r "$1" | awk '{ print $1 }'
-		# sha256sum "$1" | awk '{ print $1 }'
+		        strip_whitespace_and_comments "$1" | openssl dgst -sha256 -r      | awk '{ print $1 }'
+		#       strip_whitespace_and_comments "$1" | sha256sum "$1"               | awk '{ print $1 }'
 	fi
 
 	# note: might be different for Mac,
