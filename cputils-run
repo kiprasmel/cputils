@@ -406,6 +406,8 @@ $REPO_URL
 
 "
 
+			exit 1
+
 		fi # clipboard set up correctly
 	fi # input not empty
 
