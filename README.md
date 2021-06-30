@@ -161,7 +161,7 @@ cputils-run FILENAME.cpp [OPTIONS]... [-- EXTRA_COMPILER_ARGS]
     --help                      = see this + examples (even if hidden via config)
 
 
-examples (hideable via config):
+examples:
 
   simple:
     cputils-run a.cpp                # reads input from stdin (if a.cpp needs it)

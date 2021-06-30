@@ -317,8 +317,8 @@ cputils-run error:
 
 cannot edit input file since it's not selected.
 
-use \`-\`            to select the default input file ($INPUT_CACHE_FILE)
-or  \`- INPUT_FILE\` to select          a custom file \`INPUT_FILE\`
+use \`-f\`            to select the default input file ($INPUT_CACHE_FILE)
+or  \`-f INPUT_FILE\` to select          a custom file \`INPUT_FILE\`
 
 "
 		exit 1
