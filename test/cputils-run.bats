@@ -242,3 +242,27 @@ export -f create_output_file_name
 	cputils-run "$file" -r | grep "^$recompile_message$"
 }
 
+@test "does *not* run file (and exits) if compilation failed" {
+	file="filename.cpp"
+	create_file "$file"
+
+	! cputils-run "$file" -a "--invalid-compiler-flag-lmao"
+}
+
+@test "does *not* save new hash if compilation failed" {
+	file="filename.cpp"
+	create_file "$file"
+
+	with_hash "some_hash"
+
+	cputils-run "$file"
+	hash="$(cat "$file.hash")"
+
+	with_hash "other_hash_which_should_not_be_applied"
+
+	! cputils-run "$file" -a "--invalid-compiler-flag-lmao"
+	hash_after_compilation_failed="$(cat "$file.hash")"
+
+	[ "$hash" = "$hash_after_compilation_failed" ]
+}
+

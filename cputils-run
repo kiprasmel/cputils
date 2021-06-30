@@ -546,8 +546,21 @@ else
 	# and act as multiple different arguments
 	# as opposed to a single one
 
-	g++ -o "$OUTPUT_FILE" "$INPUT_FILE"  $CPP_COMPILER_DEFAULT_ARGS  $EXTRA_FROM_ALIAS  $*  && \
-	if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi && \
+	g++ -o "$OUTPUT_FILE" "$INPUT_FILE"  $CPP_COMPILER_DEFAULT_ARGS  $EXTRA_FROM_ALIAS  $*
+	COMPILATION_RETURN=$?
+
+	[ "$COMPILATION_RETURN" -ne 0 ] && {
+		printf "\
+\n\n
+cputils-run error: compilation failed (compiler returned non-zero status ($COMPILATION_RETURN)).
+
+make sure you passed in the arguments correctly etc.
+
+"
+		exit $COMPILATION_RETURN
+	}
+
+	if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi
 	runner
 
 	if [ "$FORCE_RECOMPILE" -eq 1 ]; then
