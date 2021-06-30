@@ -75,7 +75,7 @@ load test_helper
 	printf "content" > "$input_file"
 
 	cputils-run "$file" -f "$input_file"
-	cputils-run -f "$file" "$input_file"
+	cputils-run -f "$input_file" "$file"
 }
 
 @test "does not run file with input from *non-existant* *custom* *file* (! -f FILENAME)" {
@@ -85,7 +85,7 @@ load test_helper
 	create_file_with_input "$file"
 
 	! cputils-run "$file" -f "$input_file"
-	! cputils-run -f "$file" "$input_file"
+	! cputils-run -f "$input_file" "$file"
 }
 
 @test "runs file with input from *clipboard* (-c)" {
@@ -111,10 +111,16 @@ export -f paste_from_clipboard
 @test "still does run file with input from *empty* *clipboard* (-c)" {
 	override_config \
 "
+
 paste_from_clipboard() {
 	return 0
 }
 export -f paste_from_clipboard
+
+create_output_file_name() {
+	printf \"\$1.out\"
+}
+export -f create_output_file_name
 "
 
 	file="filename.cpp"
