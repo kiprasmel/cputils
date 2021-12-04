@@ -497,8 +497,14 @@ fi
 ###fi
 
 # run based on time cmd (best if GNU /usr/bin/time is available)
-if command -v /usr/bin/time &>/dev/null; then
-	TIME_CMD="/usr/bin/env time"
+if command -v /usr/bin/time &>/dev/null || command -v /usr/bin/time &>/dev/null; then
+	# macos gnu coreutils
+	# TODO handle if darwin & no gtime
+	if command -v /usr/bin/time &>/dev/null; then
+		TIME_CMD="/usr/bin/env gtime"
+	else
+		TIME_CMD="/usr/bin/env time"
+	fi
 	TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss"
 
 	runner() {
