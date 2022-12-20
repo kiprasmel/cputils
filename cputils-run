@@ -413,8 +413,15 @@ $REPO_URL
 		fi # clipboard set up correctly
 	fi # input not empty
 
+	if ! [ -f "$INPUT_CACHE_FILE" ]; then
+		touch "$INPUT_CACHE_FILE"
+	fi
 	# prepend the input from clipboard into the cache file
 	mv "$INPUT_CACHE_FILE" "$INPUT_CACHE_FILE.bp"
+
+	# TODO: should we even touch the input cache file
+	# when we're working with the clipboard?
+
 	printf "$INPUT\n\n\n" >> "$INPUT_CACHE_FILE"
 	cat "$INPUT_CACHE_FILE.bp" >> "$INPUT_CACHE_FILE"
 	rm "$INPUT_CACHE_FILE.bp"
