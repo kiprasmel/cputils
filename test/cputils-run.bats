@@ -112,6 +112,12 @@ create_output_file_name() {
 	printf \"\$1.out\"
 }
 export -f create_output_file_name
+
+create_hash() {
+	printf \"$HASH\"
+	return 0
+}
+export -f create_hash
 "
 
 	file="filename.cpp"
