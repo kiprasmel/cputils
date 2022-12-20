@@ -5,9 +5,12 @@ on: [push, pull_request]
 
 jobs:
   test-cputils-run:
+    strategy:
+      matrix:
+        STRICT: [0, 1]
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v2
       - run: ./setup-dev.sh
-      - run: ./test.sh -f ./test/cputils-run.bats
+      - run: STRICT=${{ matrix.STRICT }} ./test.sh -f ./test/cputils-run.bats
 

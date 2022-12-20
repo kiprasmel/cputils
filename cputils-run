@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # the good stuff
 
-set -e
+test -n "$STRICT" && test "$STRICT" -ne 0 && STRICT=True || STRICT=False
+
+$STRICT && set -e
 
 CFGDIR="$HOME/.config/cputils"
 
@@ -448,8 +450,11 @@ fi
 # determine if it's safe to skip compilation 
 
 INPUT_HASH_FILE="$INPUT_FILE_FILENAME.hash"
+
+$STRICT && set +e
 NEW_SOURCE_FILE_HASH="$(create_hash "$INPUT_FILE")"
 CREATE_HASH_RETURN_STATUS=$?
+$STRICT && set -e
 
 if [ ! -f "$OUTPUT_FILE" ] && [ ! -f "$INPUT_HASH_FILE" ]; then
 	FIRST_TIME_COMPILE=1
@@ -532,8 +537,10 @@ else
 	# and act as multiple different arguments
 	# as opposed to a single one
 
+	$STRICT && set +e
 	g++ -o "$OUTPUT_FILE" "$INPUT_FILE"  $CPP_COMPILER_DEFAULT_ARGS  $EXTRA_FROM_ALIAS  $*
 	COMPILATION_RETURN=$?
+	$STRICT && set -e
 
 	[ "$COMPILATION_RETURN" -ne 0 ] && {
 		printf "\

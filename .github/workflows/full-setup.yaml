@@ -5,8 +5,11 @@ on: [push, pull_request]
 
 jobs:
   full-setup:
+    strategy:
+      matrix:
+        STRICT: [0, 1]
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v2
-      - run: make
+      - run: STRICT=${{ matrix.STRICT }} make
 
