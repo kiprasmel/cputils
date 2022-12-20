@@ -1,6 +1,6 @@
 .PHONY: all setup-dev test install
 
-all: setup-dev test install
+preinstall: setup-dev test
 
 install:
 	./install.sh
