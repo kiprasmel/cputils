@@ -68,7 +68,11 @@ setup() {
 
 # after each test
 teardown() {
-  rm -rf "$CPUTILS_TEST_DIR"
+  if test -n "$DEBUG_TESTDIRS"; then
+	  printf "${CPUTILS_TEST_DIR}\n" >> "$REPO_ROOT/testdirs"
+  else
+	  rm -rf "$CPUTILS_TEST_DIR"
+  fi
 }
 
 # --- #
