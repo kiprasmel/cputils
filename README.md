@@ -14,6 +14,19 @@ git clone https://github.com/kiprasmel/cputils.git
 cd cputils
 
 make
+
+# env vars:
+# PREFIX: where to put /bin, /include folders into.
+#         default /usr/local/
+#
+# INSTALL_DEBUGLIB: whether to install debug lib to make example work.
+#                   https://github.com/kiprasmel/debug.h
+
+# linux, intel mac:
+PREFIX=/usr/local    sudo make install
+
+# M1 mac:
+PREFIX=/opt/homebrew sudo make install
 ```
 
 <details>
