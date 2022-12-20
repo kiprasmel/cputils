@@ -107,6 +107,11 @@ paste_from_clipboard() {
 	return 0
 }
 export -f paste_from_clipboard
+
+create_output_file_name() {
+	printf \"\$1.out\"
+}
+export -f create_output_file_name
 "
 
 	file="filename.cpp"
