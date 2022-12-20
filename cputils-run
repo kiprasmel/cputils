@@ -337,6 +337,102 @@ or  \`-f INPUT_FILE\` to select          a custom file \`INPUT_FILE\`
 	exit 1
 fi
 
+# handle compilation if needs to recompile
+
+# 1. determine if it's safe to skip compilation
+
+INPUT_HASH_FILE="$INPUT_FILE_FILENAME.hash"
+
+$STRICT && set +e
+NEW_SOURCE_FILE_HASH="$(create_hash "$INPUT_FILE")"
+CREATE_HASH_RETURN_STATUS=$?
+$STRICT && set -e
+
+if [ ! -f "$OUTPUT_FILE" ] && [ ! -f "$INPUT_HASH_FILE" ]; then
+	FIRST_TIME_COMPILE=1
+else
+	FIRST_TIME_COMPILE=0
+fi
+
+if [ "$CREATE_HASH_RETURN_STATUS" -ne 0 ]; then
+	HASHING_ENABLED=0
+else
+	HASHING_ENABLED=1
+
+	touch "$INPUT_HASH_FILE"
+	OLD_HASH="$(cat "$INPUT_HASH_FILE")"
+fi
+
+#
+# the outcome depends on other side effects - extra args to the compiler
+# come to mind. We might've missed something -- take care
+#
+# the separator '@' is picked arbitrarily; it's only important that it's there
+#
+NEW_HASH="\
+NEW_SOURCE_FILE_HASH \"$NEW_SOURCE_FILE_HASH\"
+CPP_COMPILER_DEFAULT_ARGS \"$CPP_COMPILER_DEFAULT_ARGS\"
+EXTRA_FROM_ALIAS \"$EXTRA_FROM_ALIAS\"
+\$* \"$*\"\
+"
+
+#
+# the user by default will have the 'create_hash' function disabled,
+# thus $NEW_HASH will be an empty string, which is not allowed,
+# thus we never skip compilation
+#
+# otherwise, we do not check the $OLD_HASH, since it is allowed
+# for it to be empty (always happens at the very first run)
+#
+#
+if [ "$OLD_HASH" = "$NEW_HASH" ] && [ "$HASHING_ENABLED" -eq 1 ] && [ "$FORCE_RECOMPILE" -ne 1 ] && [ -f "$OUTPUT_FILE" ]; then
+	SAFE_TO_SKIP_COMPILATION=1
+else
+	SAFE_TO_SKIP_COMPILATION=0
+fi
+
+# 2. compile if needed,
+# and in any case - assign COMPILATION_STATUS
+
+if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
+	COMPILATION_STATUS="NO_RECOMPILE"
+else
+	# do NOT quote $EXTRA_FROM_ALIAS nor $*
+	# because this allows them to expand
+	# and act as multiple different arguments
+	# as opposed to a single one
+
+	$STRICT && set +e
+	g++ -o "$OUTPUT_FILE" "$INPUT_FILE"  $CPP_COMPILER_DEFAULT_ARGS  $EXTRA_FROM_ALIAS  $*
+	COMPILATION_RETURN=$?
+	$STRICT && set -e
+
+	[ "$COMPILATION_RETURN" -ne 0 ] && {
+		printf "\
+\n\n
+cputils-run error: compilation failed (compiler returned non-zero status ($COMPILATION_RETURN)).
+
+make sure you passed in the arguments correctly etc.
+
+"
+		exit $COMPILATION_RETURN
+	}
+
+	if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi
+
+	if [ "$FORCE_RECOMPILE" -eq 1 ]; then
+		COMPILATION_STATUS="FORCE_RECOMPILE"
+	else
+		if [ "$FIRST_TIME_COMPILE" -eq 1 ]; then
+			COMPILATION_STATUS="COMPILE"
+		else
+			COMPILATION_STATUS="RECOMPILE"
+		fi
+	fi
+fi
+
+# ---
+
 # make sure the file either already exists,
 # or we create it if it's expected.
 # otherwise error.
@@ -453,125 +549,20 @@ $REPO_URL
 	exit 1
 fi
 
-# determine if it's safe to skip compilation 
-
-INPUT_HASH_FILE="$INPUT_FILE_FILENAME.hash"
-
-$STRICT && set +e
-NEW_SOURCE_FILE_HASH="$(create_hash "$INPUT_FILE")"
-CREATE_HASH_RETURN_STATUS=$?
-$STRICT && set -e
-
-if [ ! -f "$OUTPUT_FILE" ] && [ ! -f "$INPUT_HASH_FILE" ]; then
-	FIRST_TIME_COMPILE=1
-else
-	FIRST_TIME_COMPILE=0
-fi
-
-if [ "$CREATE_HASH_RETURN_STATUS" -ne 0 ]; then
-	HASHING_ENABLED=0
-else
-	HASHING_ENABLED=1
-
-	touch "$INPUT_HASH_FILE"
-	OLD_HASH="$(cat "$INPUT_HASH_FILE")"
-fi
-
-#
-# the outcome depends on other side effects - extra args to the compiler
-# come to mind. We might've missed something -- take care
-# 
-# the separator '@' is picked arbitrarily; it's only important that it's there
-#
-NEW_HASH="\
-NEW_SOURCE_FILE_HASH \"$NEW_SOURCE_FILE_HASH\"
-CPP_COMPILER_DEFAULT_ARGS \"$CPP_COMPILER_DEFAULT_ARGS\"
-EXTRA_FROM_ALIAS \"$EXTRA_FROM_ALIAS\"
-\$* \"$*\"\
-"
-
-#
-# the user by default will have the 'create_hash' function disabled,
-# thus $NEW_HASH will be an empty string, which is not allowed,
-# thus we never skip compilation
-#
-# otherwise, we do not check the $OLD_HASH, since it is allowed
-# for it to be empty (always happens at the very first run)
-# 
-#
-if [ "$OLD_HASH" = "$NEW_HASH" ] && [ "$HASHING_ENABLED" -eq 1 ] && [ "$FORCE_RECOMPILE" -ne 1 ] && [ -f "$OUTPUT_FILE" ]; then
-	SAFE_TO_SKIP_COMPILATION=1
-else
-	SAFE_TO_SKIP_COMPILATION=0
-fi
-
-# TODO FIXME: BROKEN
-#### determine if we'll pipe input
-#### or if we'll leave it up for the executable
-#### to figure out itself
-###if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
-###	CONDITIONAL_INPUT_PIPER=""
-###else
-###	# careful here lmao, test thoroughly
-###	CONDITIONAL_INPUT_PIPER="printf "$INPUT" |"
-###fi
-
-runner() {
-	run() {
-		time "$OUTPUT_FILE"
-	}
-
-	if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
-		run
-	else
-		printf "$INPUT" | run
-	fi
-}
-
 # go go go
 
 printf "BEGIN INPUT\n$INPUT\nEND INPUT\n"
 printf "$INPUT_INFO\n\n"
 
-if [ "$SAFE_TO_SKIP_COMPILATION" -eq 1 ]; then
-	runner
+run_with_time() {
+	time "$OUTPUT_FILE"
+}
 
-	printf "\nNO_RECOMPILE"
+if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
+	run_with_time
 else
-	# do NOT quote $EXTRA_FROM_ALIAS nor $*
-	# because this allows them to expand
-	# and act as multiple different arguments
-	# as opposed to a single one
-
-	$STRICT && set +e
-	g++ -o "$OUTPUT_FILE" "$INPUT_FILE"  $CPP_COMPILER_DEFAULT_ARGS  $EXTRA_FROM_ALIAS  $*
-	COMPILATION_RETURN=$?
-	$STRICT && set -e
-
-	[ "$COMPILATION_RETURN" -ne 0 ] && {
-		printf "\
-\n\n
-cputils-run error: compilation failed (compiler returned non-zero status ($COMPILATION_RETURN)).
-
-make sure you passed in the arguments correctly etc.
-
-"
-		exit $COMPILATION_RETURN
-	}
-
-	if [ "$HASHING_ENABLED" -eq 1 ]; then printf "$NEW_HASH" > "$INPUT_HASH_FILE"; fi
-	runner
-
-	if [ "$FORCE_RECOMPILE" -eq 1 ]; then
-		printf "\nFORCE_RECOMPILE"
-	else
-		if [ "$FIRST_TIME_COMPILE" -eq 1 ]; then
-			printf "\nCOMPILE"
-		else
-			printf "\nRECOMPILE"
-		fi
-	fi
+	printf "$INPUT" | run_with_time
 fi
 
-printf "\n\n"
+printf "\n$COMPILATION_STATUS\n\n"
 
