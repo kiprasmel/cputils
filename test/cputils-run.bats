@@ -24,13 +24,22 @@ load test_helper
 	! cputils-run "$file"
 }
 
-@test "runs file with input from stdin (default)" {
+@test "runs file with input from stdin (default) (implicit stdin)" {
 	file="filename.cpp"
 
 	create_file_with_input "$file"
 
 	input="ayyy_lmao"
-	printf "$input" | cputils-run "$file" | grep "$input"
+	printf "$input" | cputils-run "$file"   | grep "$input" # implicit stdin
+}
+
+@test "runs file with input from stdin (default) (explicit stdin)" {
+	file="filename.cpp"
+
+	create_file_with_input "$file"
+
+	input="kek_w"
+	printf "$input" | cputils-run "$file" - | grep "$input" # explicit stdin
 }
 
 @test "runs file with input from *default* *file* (-f)" {

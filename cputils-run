@@ -496,46 +496,17 @@ fi
 ###	CONDITIONAL_INPUT_PIPER="printf "$INPUT" |"
 ###fi
 
-# run based on time cmd (best if GNU /usr/bin/time is available)
-if command -v /usr/bin/time &>/dev/null || command -v /usr/bin/time &>/dev/null; then
-	# macos gnu coreutils
-	# TODO handle if darwin & no gtime
-	if command -v /usr/bin/time &>/dev/null; then
-		TIME_CMD="/usr/bin/env gtime"
+runner() {
+	run() {
+		time "$OUTPUT_FILE"
+	}
+
+	if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
+		run
 	else
-		TIME_CMD="/usr/bin/env time"
+		printf "$INPUT" | run
 	fi
-	TIME_CMD_ARGS="-f \nmem  %M KB\nreal %es\nuser %Us \nsys  %Ss"
-
-	runner() {
-		### $CONDITIONAL_INPUT_PIPER $TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE"
-
-		if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
-			$TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE"
-		else
-			printf "$INPUT" | $TIME_CMD "$TIME_CMD_ARGS" "$OUTPUT_FILE"
-		fi
-	}
-
-else
-	TIME_CMD="time"
-	TIME_CMD_ARGS=""
-
-	# TODO FIXME: BROKEN
-	### automatically ~~taken~~ NOT taken by bash (wut)
-	### TIMEFORMAT=$'\nreal\t%3lR\nuser\t%3lU\nsys\t%3lS\n'
-
-	runner() {
-		### $CONDITIONAL_INPUT_PIPER $TIME_CMD  $TIME_CMD_ARGS  "$OUTPUT_FILE"
-
-		if [ "$WHICH_INPUT_USED" = "STDIN" ]; then
-			$TIME_CMD  $TIME_CMD_ARGS  "$OUTPUT_FILE"
-		else
-			printf "$INPUT" | $TIME_CMD  $TIME_CMD_ARGS  "$OUTPUT_FILE"
-		fi
-	}
-
-fi
+}
 
 # go go go
 
