@@ -4,6 +4,12 @@
 test -n "$STRICT" && test "$STRICT" -ne 0 && STRICT=True || STRICT=False
 
 $STRICT && set -e
+#set -u
+$STRICT && set -o pipefail
+
+# debug:
+#set -x
+#set -v
 
 CFGDIR="$HOME/.config/cputils"
 
