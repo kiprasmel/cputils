@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # the good stuff
 
+set -e
+
 CFGDIR="$HOME/.config/cputils"
 
 source "$CFGDIR/cputils.config.bash"
