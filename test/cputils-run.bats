@@ -141,6 +141,12 @@ create_output_file_name() {
 	printf \"\$1.out\"
 }
 export -f create_output_file_name
+
+create_hash() {
+	printf \"$HASH\"
+	return 0
+}
+export -f create_hash
 "
 
 	file="filename.cpp"
@@ -174,6 +180,11 @@ open_with_editor() {
 	return 0
 }
 export -f open_with_editor
+
+create_output_file_name() {
+	printf \"\$1.out\"
+}
+export -f create_output_file_name
 "
 
 	file="filename.cpp"
@@ -193,6 +204,11 @@ open_with_editor() {
 	return 0
 }
 export -f open_with_editor
+
+create_output_file_name() {
+	printf \"\$1.out\"
+}
+export -f create_output_file_name
 "
 
 	file="filename.cpp"
@@ -213,6 +229,12 @@ create_output_file_name() {
 	printf \"\$1\"
 }
 export -f create_output_file_name
+
+create_hash() {
+	printf \"$HASH\"
+	return 0
+}
+export -f create_hash
 "
 
 	file="filename.cpp"
