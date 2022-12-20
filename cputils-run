@@ -407,14 +407,7 @@ else
 	COMPILATION_RETURN=$?
 	$STRICT && set -e
 
-	[ "$COMPILATION_RETURN" -ne 0 ] && {
-		printf "\
-\n\n
-cputils-run error: compilation failed (compiler returned non-zero status ($COMPILATION_RETURN)).
-
-make sure you passed in the arguments correctly etc.
-
-"
+	test "$COMPILATION_RETURN" -ne 0 && {
 		exit $COMPILATION_RETURN
 	}
 
