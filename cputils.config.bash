@@ -69,6 +69,18 @@ strip_whitespace_and_comments() {
 	if [ "$FILE_EXT" = "cpp" ] || [ "$FILE_EXT" = "c" ]; then
 		# strip comments and whitespace
 		g++ -fpreprocessed -dD -E -P "$FILE"
+
+		#
+		# note: on macos, g++ is available, just need to symlink (or edit call here).
+		#
+		# intel mac:
+		# ln -s /usr/local/bin/gcc-12 /usr/local/bin/gcc
+		# ln -s /usr/local/bin/g++-12 /usr/local/bin/g++
+		#
+		# M1 mac:
+		# ln -s /opt/homebrew/bin/gcc-12 /usr/local/bin/gcc
+		# ln -s /opt/homebrew/bin/g++-12 /usr/local/bin/g++
+		#
 	else
 		# do nothing
 		cat "$FILE"
